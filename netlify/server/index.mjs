@@ -1,6 +1,6 @@
 import { getIdentityConfig } from '@netlify/identity'
 import { and, eq } from 'drizzle-orm'
-import { db } from '../../db/index.ts'
+import { getDb } from '../../db/index.ts'
 import { organizadores } from '../../db/schema.ts'
 import { importarDatos } from '../../src/lib/sync.ts'
 
@@ -31,6 +31,7 @@ export default async function handler(request) {
   try {
     const usuarioId = await usuarioVerificado(request)
     if (!usuarioId) return json({ error: 'Inicia sesión para acceder a tus datos.' }, 401)
+    const db = getDb()
     if (request.method === 'GET') {
       const [row] = await db.select().from(organizadores).where(eq(organizadores.usuarioId, usuarioId))
       return json(row ? { datos: row.datos, revision: row.revision, actualizadoEn: row.actualizadoEn } : { datos: null, revision: 0, actualizadoEn: null })

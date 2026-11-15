@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { PgDialect } from 'drizzle-orm/pg-core'
 import { crearDatosVacios } from '../../src/domain/empty'
 
-const mocks = vi.hoisted(() => ({ select: vi.fn(), insert: vi.fn(), update: vi.fn(), fetch: vi.fn(), where: vi.fn() }))
+const mocks = vi.hoisted(() => ({ connect: vi.fn(), select: vi.fn(), insert: vi.fn(), update: vi.fn(), fetch: vi.fn(), where: vi.fn() }))
 vi.mock('@netlify/identity', () => ({ getIdentityConfig: () => ({ url: 'https://identity.example.test/.netlify/identity' }) }))
-vi.mock('../../db/index.ts', () => ({ db: { select: mocks.select, insert: mocks.insert, update: mocks.update } }))
+vi.mock('../../db/index.ts', () => ({ getDb: () => { mocks.connect(); return { select: mocks.select, insert: mocks.insert, update: mocks.update } } }))
 import handler from './index.mjs'
 
 function request(method = 'GET', body, authenticated = true, origin = 'https://organizador.example.test') {
@@ -72,6 +72,12 @@ describe('almacenamiento online privado', () => {
     expect(response.status).toBe(409)
     const query = new PgDialect().sqlToQuery(where.mock.calls[0][0])
     expect(query.params).toEqual(['usuario-privado', 2])
+  })
+
+  it('devuelve un error recuperable si la conexión no puede inicializarse', async () => {
+    mocks.connect.mockImplementation(() => { throw new Error('Configuration unavailable') })
+    expect((await handler(request())).status).toBe(503)
+    expect(mocks.select).not.toHaveBeenCalled()
   })
 
   it('devuelve un error recuperable si falla la base de datos', async () => {
