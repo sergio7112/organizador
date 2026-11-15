@@ -64,6 +64,7 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url)
   if (url.origin !== self.location.origin) return
+  if (url.origin !== self.location.origin) return
 
   // La sincronización siempre debe ir a la red, nunca a la caché.
   if (url.origin !== self.location.origin) {
