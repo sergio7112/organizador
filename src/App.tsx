@@ -1,5 +1,6 @@
 import { lazy, useEffect } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
+import { iniciarCuenta, useCuentaStore } from './store/useCuentaStore'
 import { EstructuraApp } from './components/layout/EstructuraApp'
 import { useAplicarTema } from './hooks/useAplicarTema'
 import { useAppStore } from './store/useAppStore'
@@ -24,11 +25,16 @@ const PaginaProyectoDetalle = lazy(() =>
 
 export default function App() {
   useAplicarTema()
+  const navigate = useNavigate()
+  const cargandoCuenta = useCuentaStore((estado) => estado.cargando)
 
   // Guarda el estado inicial vacío aunque el usuario no haya cambiado nada.
   useEffect(() => {
     useAppStore.setState({ datos: useAppStore.getState().datos })
-  }, [])
+    void iniciarCuenta().then(() => navigate(window.location.pathname, { replace: true }))
+  }, [navigate])
+
+  if (cargandoCuenta) return <p role="status" className="p-6 text-sm">Abriendo organizador…</p>
 
   return (
     <Routes>

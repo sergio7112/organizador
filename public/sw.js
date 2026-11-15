@@ -4,7 +4,7 @@
  *  - Recursos estáticos: caché primero y se guardan al usarlos por primera vez.
  * Sube CACHE_VERSION al publicar cambios importantes de la app.
  */
-const CACHE_VERSION = 'organizador-v4'
+const CACHE_VERSION = 'organizador-v5'
 const CACHE = `${CACHE_VERSION}-estatico`
 const APP_SHELL = [
   '/',
@@ -63,6 +63,7 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url)
   if (url.origin !== self.location.origin) return
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/.netlify/')) return
 
   const esNavegacion =
     request.mode === 'navigate' ||

@@ -15,6 +15,7 @@ import { Tarjeta } from '../components/ui/Tarjeta'
 import { Boton } from '../components/ui/Boton'
 import { ControlSegmentado } from '../components/ui/ControlSegmentado'
 import { DialogoConfirmacion } from '../components/ui/DialogoConfirmacion'
+import { CuentaOnline } from '../components/CuentaOnline'
 
 const OPCIONES_TEMA = [
   { valor: 'claro' as const, etiqueta: 'Claro' },
@@ -75,6 +76,8 @@ export function PaginaAjustes() {
         descripcion="Apariencia y datos de la aplicación"
       />
 
+      <CuentaOnline />
+
       <Tarjeta className="mb-4 p-4 sm:p-5">
         <h2 className="text-sm font-semibold">Apariencia</h2>
         <p className="mt-1 text-sm text-[var(--texto-suave)]">
@@ -108,7 +111,7 @@ export function PaginaAjustes() {
           Datos
         </h2>
         <p className="mt-1 text-sm text-[var(--texto-suave)]">
-          Todo se guarda en este navegador, sin conexión y sin cuentas. Hay{' '}
+          Los cambios se guardan en este navegador, incluso sin conexión. Usa el almacenamiento online para conservar una copia en tu cuenta. Hay{' '}
           {datos.asignaturas.length} asignaturas, {datos.temas.length} temas y{' '}
           {datos.tareas.length} tareas guardadas.
         </p>
@@ -175,7 +178,7 @@ export function PaginaAjustes() {
           </div>
           <div className="flex justify-between gap-3">
             <dt className="text-[var(--texto-suave)]">Almacenamiento</dt>
-            <dd>Local en este navegador</dd>
+            <dd>Local y copia online opcional</dd>
           </div>
         </dl>
       </Tarjeta>

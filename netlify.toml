@@ -3,11 +3,61 @@
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "22"
+  NODE_VERSION = "24"
 
 # Las rutas de React Router se resuelven en el cliente: cualquier URL
 # desconocida devuelve la aplicación.
 [[redirects]]
-  from = "/*"
+  from = "/hoy"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/asignaturas"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/asignaturas/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/examenes"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/tareas"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/calendario"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/proyectos"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/proyectos/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/repaso"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/errores"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/ajustes"
   to = "/index.html"
   status = 200
