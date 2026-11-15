@@ -4,7 +4,7 @@
  *  - Recursos estáticos: caché primero y se guardan al usarlos por primera vez.
  * Sube CACHE_VERSION al publicar cambios importantes de la app.
  */
-const CACHE_VERSION = 'organizador-v5'
+const CACHE_VERSION = 'organizador-v6'
 const CACHE = `${CACHE_VERSION}-estatico`
 const APP_SHELL = [
   '/',

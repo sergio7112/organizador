@@ -37,8 +37,8 @@ export function CuentaOnline() {
     setOcupado(true)
     solicitarOnline('GET').then((resultado) => {
       if (activo) setCopia(resultado)
-    }).catch(() => {
-      if (activo) { setError(true); setMensaje('No se pudo consultar la copia online. Tus datos locales se conservan. Pulsa «Consultar estado» para reintentar.') }
+    }).catch((e: unknown) => {
+      if (activo) { setError(true); setMensaje(e instanceof Error ? e.message : 'No se pudo consultar la copia online. Tus datos locales se conservan. Pulsa «Consultar estado» para reintentar.') }
     }).finally(() => { if (activo) setOcupado(false) })
     return () => { activo = false }
   }, [usuario?.id])
