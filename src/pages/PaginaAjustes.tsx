@@ -167,7 +167,7 @@ export function PaginaAjustes() {
         <dl className="mt-2 grid gap-1.5 text-sm">
           <div className="flex justify-between gap-3">
             <dt className="text-[var(--texto-suave)]">Versión</dt>
-            <dd>0.1.0</dd>
+            <dd>0.2.0</dd>
           </div>
           <div className="flex justify-between gap-3">
             <dt className="text-[var(--texto-suave)]">Curso</dt>
