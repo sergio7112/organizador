@@ -1,0 +1,13 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Las rutas de React Router se resuelven en el cliente: cualquier URL
+# desconocida devuelve la aplicación.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -1,0 +1,50 @@
+{
+  "name": "Organizador · Estudios",
+  "short_name": "Organizador",
+  "description": "Organizador personal de asignaturas, temario, exámenes, tareas, proyectos y repaso.",
+  "lang": "es",
+  "dir": "ltr",
+  "start_url": "/hoy",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#e60023",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Hoy",
+      "short_name": "Hoy",
+      "url": "/hoy"
+    },
+    {
+      "name": "Repaso",
+      "short_name": "Repaso",
+      "url": "/repaso"
+    },
+    {
+      "name": "Calendario",
+      "short_name": "Calendario",
+      "url": "/calendario"
+    }
+  ]
+}

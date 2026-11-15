@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#e60023" />
+    <meta
+      name="description"
+      content="Organizador personal de asignaturas, exámenes, tareas y proyectos."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Organizador" />
+    <meta name="application-name" content="Organizador" />
+    <title>Organizador · Estudios</title>
+    <script>
+      // Aplica el tema antes del primer pintado para evitar parpadeos.
+      ;(function () {
+        try {
+          var guardado = JSON.parse(localStorage.getItem('organizador:v1') || 'null')
+          var tema = guardado && guardado.state && guardado.state.datos
+            ? guardado.state.datos.ajustes.tema
+            : 'sistema'
+          var oscuro =
+            tema === 'oscuro' ||
+            (tema !== 'claro' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.classList.toggle('dark', oscuro)
+        } catch (e) {
+          /* sin datos guardados: se usa el tema del sistema */
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
