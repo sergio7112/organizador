@@ -2,7 +2,7 @@
 
 Aplicación personal para organizar el curso de 2.º de Bachillerato: asignaturas y temario, exámenes, tareas, calendario, proyectos con notas en Markdown, repaso espaciado y cuaderno de errores.
 
-Está pensada para usarse en el ordenador y en el móvil, con una interfaz **100 % en español**, cómoda con una sola mano y sin cuentas ni servidores. Todo el contenido se guarda en el navegador y la aplicación puede instalarse y usarse **sin conexión**.
+Está pensada para usarse en el ordenador y en el móvil, con una interfaz **100 % en español**, cómoda con una sola mano y con almacenamiento local y una copia online privada opcional mediante una cuenta personal. La aplicación puede instalarse y usarse **sin conexión**; guardar o recuperar la copia online requiere Internet.
 
 ## Funcionalidades
 
@@ -14,7 +14,7 @@ Está pensada para usarse en el ordenador y en el móvil, con una interfaz **100
 - **Proyectos**: progreso de checklist, tareas vinculadas y notas con Markdown (con guardado automático y vista previa GFM).
 - **Repaso**: repasos a 1, 3 y 7 días al pasar un tema a «Estudiando», con repasos atrasados, de hoy y próximos.
 - **Errores**: registro de qué falló y por qué, filtros, marcar como resuelto, reabrir y borrar.
-- **Ajustes**: tema claro/oscuro/sistema y copia de seguridad en JSON (exportar e importar).
+- **Ajustes**: tema claro/oscuro/sistema, cuenta personal, almacenamiento online privado y copia de seguridad en JSON (exportar e importar).
 - **PWA**: instalable, con service worker y caché para funcionar offline tras la primera visita.
 
 ## Interfaz
@@ -37,14 +37,14 @@ Está pensada para usarse en el ordenador y en el móvil, con una interfaz **100
 
 ## Puesta en marcha
 
-Requiere Node.js 22 o superior (probado con Node.js 26 y npm 11).
+Requiere Node.js 24 o superior para el servidor de Netlify.
 
 ```bash
 npm install
 npm run dev
 ```
 
-La aplicación queda disponible en `http://localhost:5173`.
+La interfaz queda disponible en `http://localhost:5173`. Para ejecutar también la API, usa `netlify dev --port 8889`. Netlify Identity requiere el sitio desplegado para probar registro, confirmación y recuperación de contraseña.
 
 > En Windows, si PowerShell bloquea `npm.ps1`, usa `npm.cmd run dev`.
 
@@ -77,19 +77,25 @@ El servidor sirve la versión compilada, así que los cambios de código se apli
 
 ## Usar en el móvil
 
-La aplicación es una web estática, así que puede publicarse una vez en Internet y usarse desde el móvil sin tener el ordenador encendido. Al servirse por HTTPS se instala como PWA y funciona sin conexión tras la primera visita.
+La aplicación se publica en Netlify y se abre en el móvil sin tener el ordenador encendido. Al servirse por HTTPS se instala como PWA y funciona sin conexión tras la primera visita.
 
-### Publicar en Netlify (recomendado)
+### Almacenamiento online personal
 
-1. Ejecuta `npm run build` para generar la carpeta `dist/`.
-2. Entra en <https://app.netlify.com/drop> y arrastra la carpeta `dist` o el archivo `Organizador-web.zip` que hay en el escritorio.
-3. Crea una cuenta gratuita para conservar el sitio y cambia el nombre en **Site configuration → Site details → Change site name** (por ejemplo, `organizador-sergi`). La dirección quedará como `https://organizador-sergi.netlify.app`.
-4. Abre esa dirección en el móvil y añádela a la pantalla de inicio:
-   - **Android (Chrome)**: menú ⋮ → «Añadir a pantalla de inicio».
-   - **iPhone (Safari)**: botón Compartir → «Añadir a pantalla de inicio».
-5. Los datos se guardan en el navegador de cada dispositivo. Para pasarlos de uno a otro, usa **Ajustes → Exportar JSON** en un dispositivo e **Importar JSON** en el otro.
+1. Abre **Ajustes → Almacenamiento online → Crear cuenta** y utiliza tu correo y una contraseña de al menos ocho caracteres.
+2. Confirma el correo mediante el enlace recibido e inicia sesión.
+3. En el dispositivo que contiene tus datos, pulsa **Guardar online** y confirma. Esto crea o sustituye tu copia privada en Netlify Database.
+4. En otro dispositivo, inicia sesión con la misma cuenta y pulsa **Recuperar online**. Antes de sustituir los datos locales se descarga una copia de seguridad en JSON.
+5. Tras hacer cambios, vuelve a pulsar **Guardar online**. La sincronización es manual; editar sin conexión guarda únicamente en ese navegador.
 
-Para actualizar la app, vuelve a ejecutar `npm run build` y arrastra de nuevo `dist` a Netlify. Los archivos `public/_redirects` y `netlify.toml` hacen que rutas como `/repaso` funcionen al abrirlas directamente.
+**Consultar estado** actualiza la fecha y revisión de la copia sin modificar los datos locales. Si otro dispositivo guarda después de consultar, el servidor rechaza la escritura para evitar sobrescribir cambios inadvertidamente. Consulta la copia y decide qué versión conservar; puedes exportar los datos locales antes de recuperar la versión online. No se combinan automáticamente las versiones.
+
+Al cerrar sesión se conserva la copia local para seguir trabajando sin conexión. En un dispositivo compartido, exporta y elimina los datos del sitio al terminar. La copia online siempre requiere autenticación y está asociada exclusivamente al identificador de la cuenta verificada.
+
+### Publicar en Netlify
+
+Conecta el repositorio para desplegar tanto la interfaz como el servidor y las migraciones. La publicación de solo `dist/` mediante arrastrar y soltar sirve la interfaz, pero no incluye el almacenamiento online. Netlify aplica las migraciones de `netlify/database/migrations/` durante el despliegue; no hay que ejecutarlas manualmente.
+
+Abre `https://organizador-es.netlify.app` en el móvil y usa «Añadir a pantalla de inicio» en Chrome o Safari.
 
 ### Sin publicar: misma red Wi-Fi
 
@@ -124,17 +130,17 @@ La lógica de dominio no depende de React ni del almacenamiento, de modo que se 
 - El store está versionado y normaliza los datos guardados al cargar, completando listas y ajustes que falten.
 - Las fechas de exámenes, tareas y repasos se almacenan como `AAAA-MM-DD`, sin hora, para evitar problemas de zona horaria.
 - El porcentaje de dominio de una asignatura cuenta únicamente los temas en estado «Dominado».
-- No hay cuentas ni envío de datos a ningún servidor.
+- El almacenamiento online usa Netlify Identity para la cuenta y Netlify Database (Postgres con Drizzle) para los datos privados. La API valida el contenido con las mismas reglas que la importación JSON, limita las copias a 5 MB y comprueba la revisión de cada escritura.
 
 ### Copia de seguridad y sincronización
 
-La sincronización elegida es **manual mediante archivos JSON**:
+Además de la copia online manual, siguen disponibles los **archivos JSON**:
 
 1. En **Ajustes → Copia de seguridad**, pulsa **Exportar JSON**. Se descarga un archivo `organizador-AAAA-MM-DD.json` con todo el contenido.
 2. En el otro dispositivo, abre la aplicación y usa **Importar JSON**.
 3. La importación valida el archivo (versión, tipos, identificadores y referencias entre entidades) y pide confirmación antes de sustituir los datos actuales.
 
-El archivo incluye una cabecera con el formato, la versión y la fecha de exportación. La interfaz de sincronización está aislada en `SyncAdapter` (`src/lib/sync.ts`), de forma que en el futuro podría añadirse otro adaptador (por ejemplo, un servidor) sin cambiar las páginas.
+El archivo incluye una cabecera con el formato, la versión y la fecha de exportación. La API online reutiliza la validación de `src/lib/sync.ts`; el cliente online está en `src/lib/online.ts`.
 
 ## PWA y uso sin conexión
 
@@ -156,16 +162,16 @@ Abre la aplicación, espera a que se registre el service worker y recarga. Despu
 
 ## Despliegue
 
-El resultado del build está en `dist/`. Puede publicarse en cualquier alojamiento estático (Netlify, Vercel, GitHub Pages, un servidor propio…).
+La interfaz se publica desde `dist/`. El almacenamiento online requiere el servidor de `netlify/server/index.mjs` y la base de datos de Netlify. El esquema está en `db/schema.ts` y las migraciones se generan con `npx drizzle-kit generate --name nombre_descriptivo`.
 
-Como se usa `BrowserRouter`, el servidor debe redirigir las rutas desconocidas a `index.html` para que funcionen los enlaces directos como `/asignaturas` o `/repaso`. Para Netlify se incluyen `public/_redirects`, `public/_headers` (sin caché para `sw.js` e `index.html`) y `netlify.toml`; si se conecta el proyecto a un repositorio, Netlify compila y publica automáticamente.
+Como se usa `BrowserRouter`, las rutas de la interfaz se redirigen a `index.html` para que funcionen los enlaces directos como `/asignaturas` o `/repaso`. Las rutas `/api/*` quedan reservadas al servidor. Se incluyen `public/_headers` (sin caché para `sw.js` e `index.html`) y `netlify.toml`; si se conecta el proyecto a un repositorio, Netlify compila y publica automáticamente.
 
 ## Decisiones de diseño
 
 - **Repaso espaciado**: al pasar un tema a «Estudiando» se programan repasos a 1, 3 y 7 días. Completar los de 1 y 3 días deja el tema en «Repasado»; completar el de 7 días lo marca como «Dominado» y cierra los repasos pendientes que queden.
 - **Tema visual**: claro, oscuro o sistema, guardado en los ajustes y aplicado antes del primer pintado. La identidad principal es rojo y blanco, inspirada en Pinterest: fondos blancos, tarjetas redondeadas y rojo `#e60023` para acciones y navegación. Los colores de asignatura y proyecto quedan como pequeños acentos de identificación (puntos y eventos del calendario) dentro de una paleta cálida de rojos, granates, rosas, corales, terracotas, naranjas y ámbar; las barras de progreso usan siempre el rojo principal.
 - **Sin datos de ejemplo**: la aplicación arranca completamente vacía. Las versiones anteriores incluían un conjunto de ejemplo; al actualizar se elimina y solo se conservan las preferencias de tema y vista del calendario. Ya no existe la opción de restaurar esos datos.
-- **Fuera de alcance**: Pomodoro, estadísticas de tiempo, cuentas de usuario y notificaciones push.
+- **Fuera de alcance**: Pomodoro, estadísticas de tiempo, colaboración entre cuentas y notificaciones push.
 
 ## Pruebas
 
@@ -173,7 +179,7 @@ Como se usa `BrowserRouter`, el servidor debe redirigir las rutas desconocidas a
 npm run test
 ```
 
-Las pruebas cubren el cálculo de progreso de exámenes, los eventos del calendario, las tareas del día, los intervalos de repaso y la validación de las copias de seguridad (incluyendo referencias inexistentes, versiones futuras e identificadores repetidos).
+Las pruebas cubren el cálculo de progreso de exámenes, los eventos del calendario, las tareas del día, los intervalos de repaso y la validación de las copias de seguridad (incluyendo referencias inexistentes, versiones futuras e identificadores repetidos). También cubren la autenticación de la API, el aislamiento por cuenta, la protección de origen y los conflictos entre dispositivos.
 
 ## Estructura de datos
 

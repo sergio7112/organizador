@@ -1,1 +1,2 @@
-/*    /index.html   200
+# Las rutas de la aplicación se configuran en netlify.toml.
+# /api/* queda disponible para el servidor.
