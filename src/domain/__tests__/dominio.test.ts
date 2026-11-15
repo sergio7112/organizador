@@ -64,7 +64,7 @@ function datos(parcial: Partial<Datos>): Datos {
     checklist: [],
     repasos: [],
     errores: [],
-    ajustes: { tema: 'sistema', vistaCalendario: 'mes' },
+    ajustes: { tema: 'sistema', vistaCalendario: 'mes', sincronizacionAutomatica: true },
     ...parcial,
   }
 }

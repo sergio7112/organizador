@@ -4,17 +4,18 @@
  *  - Recursos estáticos: caché primero y se guardan al usarlos por primera vez.
  * Sube CACHE_VERSION al publicar cambios importantes de la app.
  */
-const CACHE_VERSION = 'organizador-v4'
+const CACHE_VERSION = 'organizador-v6'
 const CACHE = `${CACHE_VERSION}-estatico`
+const APP_BASE = new URL('./', self.location.href).pathname
 const APP_SHELL = [
-  '/',
-  '/index.html',
-  '/manifest.webmanifest',
-  '/favicon.svg',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/icon-maskable-512.png',
-  '/apple-touch-icon.png',
+  APP_BASE,
+  `${APP_BASE}index.html`,
+  `${APP_BASE}manifest.webmanifest`,
+  `${APP_BASE}favicon.svg`,
+  `${APP_BASE}icon-192.png`,
+  `${APP_BASE}icon-512.png`,
+  `${APP_BASE}icon-maskable-512.png`,
+  `${APP_BASE}apple-touch-icon.png`,
 ]
 
 self.addEventListener('install', (event) => {
@@ -26,7 +27,7 @@ self.addEventListener('install', (event) => {
       // Lista generada en el build con todos los recursos (incluidos los
       // fragmentos que se cargan de forma diferida).
       try {
-        const respuesta = await fetch('/precache-manifest.json', {
+        const respuesta = await fetch(`${APP_BASE}precache-manifest.json`, {
           cache: 'no-store',
         })
         if (respuesta.ok) {
@@ -64,6 +65,11 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url)
   if (url.origin !== self.location.origin) return
 
+  // La sincronización siempre debe ir a la red, nunca a la caché.
+  if (url.origin !== self.location.origin) {
+    return
+  }
+
   const esNavegacion =
     request.mode === 'navigate' ||
     (request.headers.get('accept') || '').includes('text/html')
@@ -80,15 +86,15 @@ self.addEventListener('fetch', (event) => {
           const copia = respuesta.clone()
           caches
             .open(CACHE)
-            .then((cache) => cache.put('/index.html', copia))
+            .then((cache) => cache.put(`${APP_BASE}index.html`, copia))
             .catch(() => {})
           return respuesta
         })
         .catch(async () => {
           const cache = await caches.open(CACHE)
           return (
-            (await cache.match('/index.html', { ignoreVary: true })) ||
-            (await cache.match('/', { ignoreVary: true })) ||
+            (await cache.match(`${APP_BASE}index.html`, { ignoreVary: true })) ||
+            (await cache.match(APP_BASE, { ignoreVary: true })) ||
             new Response(
               '<!doctype html><html lang="es"><meta charset="utf-8"><title>Sin conexión</title><body style="font-family:system-ui;padding:2rem"><h1>Sin conexión</h1><p>Abre la aplicación una vez con conexión para poder usarla offline.</p></body></html>',
               { headers: { 'Content-Type': 'text/html; charset=utf-8' } },
@@ -109,7 +115,7 @@ self.addEventListener('fetch', (event) => {
       return fetch(request).then((respuesta) => {
         if (
           respuesta.ok &&
-          (url.pathname.startsWith('/assets/') ||
+          (url.pathname.startsWith(`${APP_BASE}assets/`) ||
             /\.(?:css|js|mjs|json|svg|png|ico|woff2?)$/i.test(url.pathname))
         ) {
           const copia = respuesta.clone()

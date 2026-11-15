@@ -87,6 +87,7 @@ export interface ErrorTema {
 export interface Ajustes {
   tema: TemaOscuro
   vistaCalendario: VistaCalendario
+  sincronizacionAutomatica: boolean
 }
 
 export interface Datos {

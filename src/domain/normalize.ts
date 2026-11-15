@@ -12,12 +12,18 @@ export function normalizarDatos(guardado?: Partial<Datos> | null): Datos {
   const tema = guardado?.ajustes?.tema
   const vistaCalendario = guardado?.ajustes?.vistaCalendario
 
+  const sincronizacionAutomatica =
+    typeof guardado?.ajustes?.sincronizacionAutomatica === 'boolean'
+      ? guardado.ajustes.sincronizacionAutomatica
+      : true
+
   const ajustes: Ajustes = {
     tema: tema && TEMAS.includes(tema) ? tema : 'sistema',
     vistaCalendario:
       vistaCalendario && VISTAS.includes(vistaCalendario)
         ? vistaCalendario
         : 'mes',
+    sincronizacionAutomatica,
   }
 
   return {

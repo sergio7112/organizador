@@ -392,6 +392,10 @@ export function importarDatos(contenido: string): Datos {
     ] as const)
       ? ajustesBrutos.vistaCalendario
       : 'mes',
+    sincronizacionAutomatica:
+      typeof ajustesBrutos.sincronizacionAutomatica === 'boolean'
+        ? ajustesBrutos.sincronizacionAutomatica
+        : true,
   }
 
   return normalizarDatos({

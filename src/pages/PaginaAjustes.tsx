@@ -1,8 +1,26 @@
 import { useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
-import { Database, Download, Monitor, Moon, Sun, Upload } from 'lucide-react'
+import { formatDistanceToNow } from 'date-fns'
+import { es } from 'date-fns/locale'
+import {
+  Cloud,
+  CloudOff,
+  Database,
+  Download,
+  Loader2,
+  Monitor,
+  Moon,
+  RefreshCw,
+  Sun,
+  Upload,
+} from 'lucide-react'
 import type { Datos, TemaOscuro } from '../domain/types'
 import { useAppStore } from '../store/useAppStore'
+import { useAuthStore } from '../store/useAuthStore'
+import {
+  useSyncStore,
+  type EstadoSync,
+} from '../store/useSyncStore'
 import {
   ErrorImportacion,
   descargarArchivo,
@@ -22,16 +40,52 @@ const OPCIONES_TEMA = [
   { valor: 'sistema' as const, etiqueta: 'Sistema' },
 ]
 
-export function PaginaAjustes() {
+const TEXTOS_SYNC: Record<EstadoSync, string> = {
+  inactivo: 'Preparando la sincronización…',
+  conectando: 'Conectando con Supabase…',
+  guardando: 'Guardando cambios…',
+  sincronizado: 'Todo sincronizado',
+  error: 'No se pudo sincronizar',
+  desactivado: 'Sincronización automática desactivada',
+  no_disponible: 'Sincronización no disponible en este servidor',
+}
+
+function haceCuanto(iso: string | null): string | null {
+  if (!iso) return null
+  const fecha = new Date(iso)
+  if (Number.isNaN(fecha.getTime())) return null
+  return formatDistanceToNow(fecha, { addSuffix: true, locale: es })
+}
+
+export function PaginaAjustes({ correo }: { correo: string | null }) {
   const datos = useAppStore((estado) => estado.datos)
   const cambiarAjustes = useAppStore((estado) => estado.cambiarAjustes)
   const reemplazarDatos = useAppStore((estado) => estado.reemplazarDatos)
+  const estadoSync = useSyncStore((estado) => estado.estado)
+  const mensajeSync = useSyncStore((estado) => estado.mensaje)
+  const ultimaSync = useSyncStore((estado) => estado.ultimaSincronizacion)
+  const sincronizarAhora = useSyncStore((estado) => estado.sincronizarAhora)
+  const salir = useAuthStore((estado) => estado.salir)
   const [importacion, setImportacion] = useState<Datos | null>(null)
   const [mensaje, setMensaje] = useState<{
     tipo: 'ok' | 'error'
     texto: string
   } | null>(null)
   const archivoRef = useRef<HTMLInputElement>(null)
+
+  const sincronizacionActiva = datos.ajustes.sincronizacionAutomatica
+  const ocupado = estadoSync === 'conectando' || estadoSync === 'guardando'
+  const cuando = haceCuanto(ultimaSync)
+  const detalleSync =
+    estadoSync === 'sincronizado' && cuando
+      ? `Última sincronización ${cuando}.`
+      : mensajeSync
+  const colorSync =
+    estadoSync === 'error' || estadoSync === 'no_disponible'
+      ? 'text-[var(--peligro)]'
+      : estadoSync === 'sincronizado'
+        ? 'text-[var(--exito)]'
+        : 'text-[var(--texto-suave)]'
 
   const exportar = () => {
     try {
@@ -108,14 +162,91 @@ export function PaginaAjustes() {
           Datos
         </h2>
         <p className="mt-1 text-sm text-[var(--texto-suave)]">
-          Todo se guarda en este navegador, sin conexión y sin cuentas. Hay{' '}
-          {datos.asignaturas.length} asignaturas, {datos.temas.length} temas y{' '}
-          {datos.tareas.length} tareas guardadas.
+          Hay {datos.asignaturas.length} asignaturas, {datos.temas.length} temas
+          y {datos.tareas.length} tareas guardadas. Todo se guarda en este
+          navegador y, si la sincronización está activa, también en tu cuenta
+          privada de Supabase.
         </p>
         <p className="mt-3 rounded-xl bg-[var(--superficie-2)] px-3 py-2 text-xs text-[var(--texto-suave)]">
           La aplicación arranca vacía. Crea tus asignaturas, tareas, exámenes y
           proyectos desde el menú.
         </p>
+      </Tarjeta>
+
+      <Tarjeta className="mb-4 p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <Cloud size={16} />
+              Sincronización
+            </h2>
+            <p className="mt-1 text-sm text-[var(--texto-suave)]">
+              Tus datos se guardan en Supabase y aparecen en tus dispositivos
+              en unos segundos. Solo tu cuenta puede acceder a ellos.
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={sincronizacionActiva}
+            aria-label="Sincronización automática"
+            onClick={() =>
+              cambiarAjustes({
+                sincronizacionAutomatica: !sincronizacionActiva,
+              })
+            }
+            className={[
+              'relative mt-1 inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors',
+              sincronizacionActiva
+                ? 'bg-[var(--primario)]'
+                : 'bg-[var(--borde)]',
+            ].join(' ')}
+          >
+            <span
+              className={[
+                'inline-block h-4 w-4 rounded-full bg-white shadow transition-transform',
+                sincronizacionActiva ? 'translate-x-6' : 'translate-x-1',
+              ].join(' ')}
+            />
+          </button>
+        </div>
+
+        <div className="mt-4 rounded-xl bg-[var(--superficie-2)] px-3 py-2.5 text-sm">
+          <p className={`flex items-center gap-2 font-medium ${colorSync}`}>
+            {ocupado ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : estadoSync === 'error' || estadoSync === 'no_disponible' ? (
+              <CloudOff size={16} />
+            ) : (
+              <Cloud size={16} />
+            )}
+            {TEXTOS_SYNC[estadoSync]}
+          </p>
+          {detalleSync && (
+            <p className="mt-1 text-xs text-[var(--texto-suave)]">
+              {detalleSync}
+            </p>
+          )}
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <Boton
+            variante="secundario"
+            onClick={() => void sincronizarAhora()}
+            disabled={ocupado}
+          >
+            <RefreshCw
+              size={16}
+              className={ocupado ? 'animate-spin' : undefined}
+            />
+            Sincronizar ahora
+          </Boton>
+          <span className="text-xs text-[var(--texto-suave)]">
+            {sincronizacionActiva
+              ? 'Los cambios se envían solos.'
+              : 'Actívala para compartir los datos entre dispositivos.'}
+          </span>
+        </div>
       </Tarjeta>
 
       <Tarjeta className="mb-4 p-4 sm:p-5">
@@ -125,8 +256,9 @@ export function PaginaAjustes() {
         </h2>
         <p className="mt-1 text-sm text-[var(--texto-suave)]">
           Exporta todo tu contenido a un archivo JSON o impórtalo en otro
-          dispositivo. La importación sustituye los datos que tengas en este
-          navegador.
+          dispositivo. Sirve como copia de seguridad adicional a la
+          sincronización automática. La importación sustituye los datos que
+          tengas en este navegador.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Boton onClick={exportar}>
@@ -162,12 +294,22 @@ export function PaginaAjustes() {
         )}
       </Tarjeta>
 
+      <Tarjeta className="mb-4 p-4 sm:p-5">
+        <h2 className="text-sm font-semibold">Cuenta</h2>
+        <p className="mt-1 text-sm text-[var(--texto-suave)]">
+          Sesión iniciada como {correo ?? 'usuario'}.
+        </p>
+        <Boton variante="secundario" className="mt-3" onClick={() => void salir()}>
+          Cerrar sesión
+        </Boton>
+      </Tarjeta>
+
       <Tarjeta className="p-4 sm:p-5">
         <h2 className="text-sm font-semibold">Acerca de</h2>
         <dl className="mt-2 grid gap-1.5 text-sm">
           <div className="flex justify-between gap-3">
             <dt className="text-[var(--texto-suave)]">Versión</dt>
-            <dd>0.2.0</dd>
+            <dd>0.3.0</dd>
           </div>
           <div className="flex justify-between gap-3">
             <dt className="text-[var(--texto-suave)]">Curso</dt>
@@ -175,7 +317,11 @@ export function PaginaAjustes() {
           </div>
           <div className="flex justify-between gap-3">
             <dt className="text-[var(--texto-suave)]">Almacenamiento</dt>
-            <dd>Local en este navegador</dd>
+            <dd>
+              {sincronizacionActiva
+                ? 'Navegador y Supabase'
+                : 'Local en este navegador'}
+            </dd>
           </div>
         </dl>
       </Tarjeta>

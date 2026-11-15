@@ -16,6 +16,7 @@ export function crearDatosVacios(): Datos {
     ajustes: {
       tema: 'sistema',
       vistaCalendario: 'mes',
+      sincronizacionAutomatica: true,
     },
   }
 }

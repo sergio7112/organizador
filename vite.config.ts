@@ -8,14 +8,14 @@ import tailwindcss from '@tailwindcss/vite'
  * worker pueda precargarlos y la aplicación funcione offline por completo,
  * incluidas las páginas que se cargan de forma diferida.
  */
-function precacheManifest(): Plugin {
+function precacheManifest(base: string): Plugin {
   return {
     name: 'organizador-precache-manifest',
     apply: 'build',
     generateBundle(_opciones, bundle) {
       const rutas = Object.keys(bundle)
         .filter((archivo) => archivo.startsWith('assets/'))
-        .map((archivo) => `/${archivo}`)
+        .map((archivo) => `${base}${archivo}`)
         .sort()
 
       this.emitFile({
@@ -27,10 +27,14 @@ function precacheManifest(): Plugin {
   }
 }
 
-export default defineConfig({
-  plugins: [react(), tailwindcss(), precacheManifest()],
-  server: {
-    port: 5173,
-    host: true,
-  },
+export default defineConfig(({ mode }) => {
+  const base = mode === 'production' ? '/organizador/' : '/'
+  return {
+    base,
+    plugins: [react(), tailwindcss(), precacheManifest(base)],
+    server: {
+      port: 5173,
+      host: true,
+    },
+  }
 })

@@ -87,7 +87,11 @@ const DATOS: Datos = {
       resuelto: false,
     },
   ],
-  ajustes: { tema: 'oscuro', vistaCalendario: 'semana' },
+  ajustes: {
+    tema: 'oscuro',
+    vistaCalendario: 'semana',
+    sincronizacionAutomatica: true,
+  },
 }
 
 describe('sincronización por JSON', () => {
@@ -169,6 +173,7 @@ describe('sincronización por JSON', () => {
     expect(importarDatos(JSON.stringify(sinAjustes)).ajustes).toEqual({
       tema: 'sistema',
       vistaCalendario: 'mes',
+      sincronizacionAutomatica: true,
     })
   })
 })

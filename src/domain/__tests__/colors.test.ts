@@ -35,11 +35,11 @@ describe('paleta cálida', () => {
           creadoEn: '2026-11-14T10:00:00.000Z',
         },
       ],
-      ajustes: { tema: 'claro', vistaCalendario: 'mes' },
+      ajustes: { tema: 'claro', vistaCalendario: 'mes', sincronizacionAutomatica: true },
     })
 
     expect(datos.asignaturas?.[0].color).toBe('#86198f')
     expect(datos.proyectos?.[0].color).toBe('#c2410c')
-    expect(datos.ajustes).toEqual({ tema: 'claro', vistaCalendario: 'mes' })
+    expect(datos.ajustes).toEqual({ tema: 'claro', vistaCalendario: 'mes', sincronizacionAutomatica: true })
   })
 })
