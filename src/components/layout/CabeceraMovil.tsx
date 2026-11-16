@@ -1,22 +1,49 @@
-import { Link } from 'react-router-dom'
-import { GraduationCap, Settings } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import { GraduationCap, Menu, Settings } from 'lucide-react'
+import { MenuMovil } from './MenuMovil'
 
 export function CabeceraMovil() {
+  const [abierto, setAbierto] = useState(false)
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    setAbierto(false)
+  }, [pathname])
+
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-[var(--borde)] bg-[var(--fondo)] px-4 pt-safe md:hidden">
-      <Link to="/hoy" className="flex items-center gap-2 text-sm font-semibold">
-        <span className="grid size-7 place-items-center rounded-lg bg-[var(--primario)] text-[var(--primario-contraste)]">
-          <GraduationCap size={16} />
-        </span>
-        Organizador
-      </Link>
-      <Link
-        to="/ajustes"
-        aria-label="Ajustes"
-        className="grid size-10 place-items-center rounded-xl text-[var(--texto-suave)] transition-colors hover:bg-[var(--superficie-2)] hover:text-[var(--texto)]"
-      >
-        <Settings size={20} />
-      </Link>
-    </header>
+    <>
+      <header className="sticky top-0 z-30 grid h-14 grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2 border-b border-[var(--borde)] bg-[var(--fondo)] px-3 pt-safe md:hidden">
+        <button
+          type="button"
+          onClick={() => setAbierto(true)}
+          aria-label="Abrir menú"
+          aria-expanded={abierto}
+          className="grid size-10 place-items-center rounded-xl text-[var(--texto-suave)] transition-colors hover:bg-[var(--superficie-2)] hover:text-[var(--texto)] active:bg-[var(--superficie-2)]"
+        >
+          <Menu size={22} />
+        </button>
+
+        <Link
+          to="/hoy"
+          className="flex min-w-0 items-center justify-center gap-2 text-[15px] font-semibold tracking-tight"
+        >
+          <span className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-[var(--primario)] text-[var(--primario-contraste)]">
+            <GraduationCap size={17} />
+          </span>
+          <span className="truncate">Organizador</span>
+        </Link>
+
+        <Link
+          to="/ajustes"
+          aria-label="Ajustes"
+          className="grid size-10 place-items-center justify-self-end rounded-xl text-[var(--texto-suave)] transition-colors hover:bg-[var(--superficie-2)] hover:text-[var(--texto)]"
+        >
+          <Settings size={20} />
+        </Link>
+      </header>
+
+      <MenuMovil abierto={abierto} onCerrar={() => setAbierto(false)} />
+    </>
   )
 }

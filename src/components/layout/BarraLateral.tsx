@@ -4,16 +4,16 @@ import { SECCIONES, SECCION_AJUSTES } from './navegacion'
 import { cn } from '../../lib/format'
 
 const BASE_ENLACE =
-  'flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors'
-const ACTIVO = 'bg-[var(--primario-suave)] text-[var(--primario)]'
+  'flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[14px] transition-colors'
+const ACTIVO = 'bg-[var(--primario-suave)] font-semibold text-[var(--primario)]'
 const INACTIVO =
-  'text-[var(--texto-suave)] hover:bg-[var(--superficie-2)] hover:text-[var(--texto)]'
+  'font-medium text-[var(--texto-suave)] hover:bg-[var(--superficie-2)] hover:text-[var(--texto)]'
 
 export function BarraLateral() {
   return (
-    <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-[var(--borde)] bg-[var(--superficie)] px-3 py-5 md:flex">
-      <Link to="/hoy" className="mb-7 flex items-center gap-2.5 px-2">
-        <span className="grid size-9 place-items-center rounded-xl bg-[var(--primario)] text-[var(--primario-contraste)]">
+    <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-[var(--borde)] bg-[var(--superficie)] px-3 py-5 md:flex">
+      <Link to="/hoy" className="mb-6 flex items-center gap-2.5 px-2">
+        <span className="grid size-9 place-items-center rounded-[10px] bg-[var(--primario)] text-[var(--primario-contraste)]">
           <GraduationCap size={20} />
         </span>
         <span className="min-w-0">

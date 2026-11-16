@@ -66,7 +66,7 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={idTitulo}
         className={cn(
-          'animar-panel relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-3xl border border-[var(--borde)] bg-[var(--superficie)] shadow-2xl outline-none sm:rounded-2xl',
+          'animar-panel relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-[var(--borde)] bg-[var(--superficie)] shadow-2xl outline-none sm:rounded-2xl',
           ANCHOS[ancho],
         )}
       >

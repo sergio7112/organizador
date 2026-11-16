@@ -9,7 +9,7 @@ const BASE =
 
 const VARIANTES: Record<Variante, string> = {
   primario:
-    'bg-[var(--primario)] text-[var(--primario-contraste)] hover:brightness-110 active:brightness-95',
+    'bg-[var(--primario)] text-[var(--primario-contraste)] shadow-[0_1px_2px_rgb(0_0_0/0.08)] hover:brightness-110 active:brightness-95',
   secundario:
     'border border-[var(--borde)] bg-[var(--superficie)] text-[var(--texto)] hover:bg-[var(--superficie-2)]',
   fantasma:

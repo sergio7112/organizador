@@ -1,7 +1,6 @@
 import { Suspense, useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { BarraLateral } from './BarraLateral'
-import { BarraInferior } from './BarraInferior'
 import { CabeceraMovil } from './CabeceraMovil'
 import { seccionDeRuta } from './navegacion'
 
@@ -22,7 +21,7 @@ export function EstructuraApp() {
       <BarraLateral />
       <div className="flex min-w-0 flex-1 flex-col">
         <CabeceraMovil />
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 pt-5 md:px-8 md:pb-12 md:pt-9">
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-10 pt-4 md:px-8 md:pb-12 md:pt-9">
           <div key={pathname} className="animar-panel">
             <Suspense
               fallback={
@@ -34,7 +33,6 @@ export function EstructuraApp() {
           </div>
         </main>
       </div>
-      <BarraInferior />
     </div>
   )
 }

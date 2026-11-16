@@ -7,8 +7,8 @@
   "start_url": "./#/hoy",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#e60023",
+  "background_color": "#f5f7f9",
+  "theme_color": "#1f4e79",
   "categories": ["education", "productivity"],
   "icons": [
     {

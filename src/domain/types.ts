@@ -150,19 +150,19 @@ export const ETIQUETAS_ESTADO_TAREA: Record<EstadoTarea, string> = {
   hecha: 'Hecha',
 }
 
-/** Paleta cálida, en sintonía con el rojo principal de la app. */
+/** Paleta equilibrada, en sintonía con el azul tinta de la app. */
 export const PALETA = [
-  { nombre: 'Rojo', valor: '#e60023' },
-  { nombre: 'Granate', valor: '#9f1239' },
-  { nombre: 'Cereza', valor: '#c2185b' },
-  { nombre: 'Rosa', valor: '#db2777' },
-  { nombre: 'Coral', valor: '#f0616d' },
-  { nombre: 'Terracota', valor: '#c2410c' },
-  { nombre: 'Naranja', valor: '#ea580c' },
-  { nombre: 'Ámbar', valor: '#d97706' },
+  { nombre: 'Azul tinta', valor: '#1f4e79' },
+  { nombre: 'Verde pino', valor: '#2f7a52' },
+  { nombre: 'Terracota', valor: '#b45309' },
   { nombre: 'Mostaza', valor: '#a16207' },
-  { nombre: 'Ciruela', valor: '#86198f' },
-  { nombre: 'Piedra', valor: '#78716c' },
+  { nombre: 'Ciruela', valor: '#6b4c8a' },
+  { nombre: 'Rosa', valor: '#be185d' },
+  { nombre: 'Cian', valor: '#0e7490' },
+  { nombre: 'Índigo', valor: '#4338ca' },
+  { nombre: 'Granate', valor: '#9f1239' },
+  { nombre: 'Piedra', valor: '#57534e' },
+  { nombre: 'Ámbar', valor: '#ca8a04' },
 ] as const
 
 // ==================== HÁBITOS ====================

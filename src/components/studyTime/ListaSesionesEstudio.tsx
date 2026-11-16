@@ -105,18 +105,40 @@ export function ListaSesionesEstudio({
       ) : (
         <>
           {/* Controles */}
-          <Tarjeta className="p-4">
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-[var(--texto-suave)]">
-                  Total: <strong className="text-[var(--texto)]">{formatearDuracion(totalMinutos)}</strong>
-                </span>
+          <Tarjeta className="p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium text-[var(--texto-suave)]">
+                Total:{' '}
+                <strong className="text-[var(--texto)]">
+                  {formatearDuracion(totalMinutos)}
+                </strong>
+              </span>
+
+              <div className="ml-auto flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setOrdenFecha((o) => (o === 'desc' ? 'asc' : 'desc'))}
+                  className="flex h-9 items-center gap-1 rounded-xl border border-[var(--borde)] px-2.5 text-xs font-medium text-[var(--texto-suave)] transition-colors hover:bg-[var(--superficie-2)] hover:text-[var(--texto)]"
+                  aria-label={ordenFecha === 'desc' ? 'Más antiguas primero' : 'Más recientes primero'}
+                >
+                  {ordenFecha === 'desc' ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
+                  {ordenFecha === 'desc' ? 'Recientes' : 'Antiguas'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAgrupado((a) => !a)}
+                  className="flex h-9 items-center gap-1 rounded-xl border border-[var(--borde)] px-2.5 text-xs font-medium text-[var(--texto-suave)] transition-colors hover:bg-[var(--superficie-2)] hover:text-[var(--texto)]"
+                  aria-pressed={agrupado}
+                  aria-label={agrupado ? 'Desagrupar por fecha' : 'Agrupar por fecha'}
+                >
+                  {agrupado ? 'Agrupado' : 'Lista'}
+                </button>
               </div>
 
               <select
                 value={filtroAsignatura}
                 onChange={(e) => setFiltroAsignatura(e.target.value)}
-                className="rounded-xl border border-[var(--borde)] bg-[var(--fondo)] px-3 py-2 text-sm"
+                className="order-last w-full rounded-xl border border-[var(--borde)] bg-[var(--fondo)] px-3 py-2.5 text-sm sm:order-none sm:w-auto"
                 aria-label="Filtrar por asignatura"
               >
                 <option value="todas">Todas las asignaturas</option>
@@ -126,26 +148,6 @@ export function ListaSesionesEstudio({
                   </option>
                 ))}
               </select>
-
-              <div className="flex items-center gap-2 ml-auto">
-                <button
-                  type="button"
-                  onClick={() => setOrdenFecha((o) => (o === 'desc' ? 'asc' : 'desc'))}
-                  className="flex items-center gap-1 rounded-xl px-3 py-2 text-sm text-[var(--texto-suave)] hover:bg-[var(--superficie-2)] transition-colors"
-                  aria-label={ordenFecha === 'desc' ? 'Más antiguas primero' : 'Más recientes primero'}
-                >
-                  {ordenFecha === 'desc' ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAgrupado((a) => !a)}
-                  className="flex items-center gap-1 rounded-xl px-3 py-2 text-sm text-[var(--texto-suave)] hover:bg-[var(--superficie-2)] transition-colors"
-                  aria-pressed={agrupado}
-                  aria-label={agrupado ? 'Desagrupar por fecha' : 'Agrupar por fecha'}
-                >
-                  {agrupado ? 'Agrupado' : 'Lista'}
-                </button>
-              </div>
             </div>
           </Tarjeta>
 

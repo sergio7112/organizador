@@ -14,24 +14,30 @@ export function CabeceraPagina({
   volver?: { ruta: string; etiqueta: string }
 }) {
   return (
-    <header className="mb-6">
+    <header className="mb-5">
       {volver && (
         <Link
           to={volver.ruta}
-          className="-ml-1 mb-2 inline-flex items-center gap-0.5 text-sm text-[var(--texto-suave)] transition-colors hover:text-[var(--texto)]"
+          className="-ml-1 mb-2 inline-flex items-center gap-0.5 text-[13px] text-[var(--texto-suave)] transition-colors hover:text-[var(--texto)]"
         >
           <ChevronLeft size={16} />
           {volver.etiqueta}
         </Link>
       )}
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{titulo}</h1>
+          <h1 className="text-[24px] font-semibold leading-tight tracking-tight md:text-[28px]">
+            {titulo}
+          </h1>
           {descripcion && (
-            <p className="mt-1 text-sm text-[var(--texto-suave)]">{descripcion}</p>
+            <p className="mt-1 text-[13px] text-[var(--texto-suave)]">{descripcion}</p>
           )}
         </div>
-        {accion}
+        {accion && (
+          <div className="w-full sm:w-auto sm:shrink-0 [&>*]:w-full sm:[&>*]:w-auto">
+            {accion}
+          </div>
+        )}
       </div>
     </header>
   )

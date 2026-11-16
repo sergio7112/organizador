@@ -14,7 +14,7 @@ export function Tarjeta({
     <div
       style={style}
       className={cn(
-        'rounded-3xl border border-[var(--borde)] bg-[var(--superficie)] shadow-[var(--sombra)] transition-[transform,box-shadow,border-color] duration-200',
+        'rounded-2xl border border-[var(--borde)] bg-[var(--superficie)] shadow-[var(--sombra)] transition-[transform,box-shadow,border-color] duration-200',
         className,
       )}
     >
