@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react'
 import {
-  BarChart,
   Bar,
   LineChart,
   Line,
-  AreaChart,
+  ComposedChart,
   Area,
   XAxis,
   YAxis,
@@ -236,16 +235,18 @@ export function GraficoTiempoEstudio({ sesiones, asignaturas }: GraficoTiempoEst
       <Tarjeta className="p-4">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="font-semibold">Visualización</h3>
-          <ControlSegmentado
-            valor={tipoGrafico}
-            onChange={setTipoGrafico}
-            opciones={[
-              { valor: 'barras', etiqueta: 'Barras' },
-              { valor: 'linea', etiqueta: 'Línea' },
-              { valor: 'area', etiqueta: 'Área' },
-            ]}
-            ariaLabel="Tipo de gráfico"
-          />
+          {vista !== 'asignaturas' && (
+            <ControlSegmentado
+              valor={tipoGrafico}
+              onChange={setTipoGrafico}
+              opciones={[
+                { valor: 'barras', etiqueta: 'Barras' },
+                { valor: 'linea', etiqueta: 'Línea' },
+                { valor: 'area', etiqueta: 'Área' },
+              ]}
+              ariaLabel="Tipo de gráfico"
+            />
+          )}
         </div>
 
         <ControlSegmentado
@@ -313,7 +314,10 @@ export function GraficoTiempoEstudio({ sesiones, asignaturas }: GraficoTiempoEst
                   paddingAngle={2}
                   dataKey="valor"
                   nameKey="nombre"
-                  label={(props: { payload?: { value: number; name: string; payload: { porcentaje: number } } }) => props.payload ? `${props.payload.name} ${props.payload.payload.porcentaje}%` : ''}
+                  label={({ name, percent, payload }: { name?: string; percent?: number; payload?: { porcentaje?: number } }) => {
+                    const porcentaje = payload?.porcentaje ?? Math.round((percent ?? 0) * 100)
+                    return `${name ?? ''} ${porcentaje}%`
+                  }}
                   labelLine={false}
                 >
                   {datosPorAsignatura.map((_, i) => (
@@ -411,7 +415,7 @@ export function GraficoTiempoEstudio({ sesiones, asignaturas }: GraficoTiempoEst
                     )}
                   </LineChart>
                 ) : tipoGrafico === 'area' ? (
-                  <AreaChart data={datosGrafico} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <ComposedChart data={datosGrafico} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--borde)" vertical={false} />
                     <XAxis
                       dataKey={vista === 'semana' ? 'dia' : vista === 'mes' ? 'semana' : 'mes'}
@@ -480,9 +484,9 @@ export function GraficoTiempoEstudio({ sesiones, asignaturas }: GraficoTiempoEst
                         connectNulls
                       />
                     )}
-                  </AreaChart>
+                  </ComposedChart>
                 ) : (
-                  <BarChart data={datosGrafico} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} layout="vertical">
+                  <ComposedChart data={datosGrafico} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--borde)" horizontal={false} />
                     <XAxis
                       type="number"
@@ -533,7 +537,7 @@ export function GraficoTiempoEstudio({ sesiones, asignaturas }: GraficoTiempoEst
                             key={dataKey}
                             dataKey={dataKey}
                             fill={color}
-                            radius={[4, 4, 0, 0]}
+                            radius={[0, 4, 4, 0]}
                             maxBarSize={40}
                           />
                         )
@@ -549,7 +553,7 @@ export function GraficoTiempoEstudio({ sesiones, asignaturas }: GraficoTiempoEst
                         connectNulls
                       />
                     )}
-                  </BarChart>
+                  </ComposedChart>
                 )}
               </>
             )}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Plus, Target, BarChart2, Calendar, TrendingUp } from 'lucide-react'
 import { CabeceraPagina } from '../components/ui/CabeceraPagina'
 import { Tarjeta } from '../components/ui/Tarjeta'
@@ -6,6 +6,7 @@ import { Boton } from '../components/ui/Boton'
 import { ListaHabitos } from '../components/habits/ListaHabitos'
 import { GraficoProgresoHabitos } from '../components/habits/GraficoProgresoHabitos'
 import { useAppStore } from '../store/useAppStore'
+import { hoyISO, sumarDias } from '../domain/dates'
 import { cn } from '../lib/format'
 
 export function PaginaHabitos() {
@@ -15,8 +16,24 @@ export function PaginaHabitos() {
     datos.habitos.filter((h) => !h.archivado).slice(0, 3).map((h) => h.id),
   )
   const [vista, setVista] = useState<'lista' | 'graficos'>('lista')
+  const [solicitudNueva, setSolicitudNueva] = useState(0)
 
   const habitosActivos = datos.habitos.filter((h) => !h.archivado)
+
+  // Mantiene la selección del gráfico sincronizada con los hábitos existentes.
+  useEffect(() => {
+    const idsActivos = datos.habitos.filter((h) => !h.archivado).map((h) => h.id)
+    setHabitosSeleccionados((seleccionados) => {
+      const vigentes = seleccionados.filter((id) => idsActivos.includes(id))
+      if (vigentes.length === seleccionados.length) return seleccionados
+      return vigentes.length > 0 ? vigentes : idsActivos.slice(0, 3)
+    })
+  }, [datos.habitos])
+
+  const abrirNuevoHabito = () => {
+    setVista('lista')
+    setSolicitudNueva((n) => n + 1)
+  }
 
   return (
     <div className="animar-entrada grid gap-6">
@@ -24,7 +41,7 @@ export function PaginaHabitos() {
         titulo="Hábitos"
         descripcion="Construye rutinas, mantén rachas y visualiza tu progreso"
         accion={
-          <Boton onClick={() => setVista('lista')}>
+          <Boton onClick={abrirNuevoHabito}>
             <Plus size={18} className="mr-1" /> Nuevo hábito
           </Boton>
         }
@@ -70,6 +87,8 @@ export function PaginaHabitos() {
           onArchivar={archivarHabito}
           onReordenar={reordenarHabitos}
           onAlternarRegistro={alternarRegistroHabito}
+          solicitudNueva={solicitudNueva}
+          onSolicitudAtendida={() => setSolicitudNueva(0)}
         />
       ) : (
         <>
@@ -90,19 +109,16 @@ export function PaginaHabitos() {
 
               // Racha actual
               let racha = 0
-              const hoy = new Date().toISOString().split('T')[0]
               const ordenados = registrosHabito
                 .filter((r) => r.completado)
                 .map((r) => r.fecha)
                 .sort()
                 .reverse()
-              let fechaEsperada = hoy
+              let fechaEsperada = hoyISO()
               for (const fecha of ordenados) {
                 if (fecha === fechaEsperada) {
                   racha++
-                  const d = new Date(fechaEsperada + 'T00:00:00')
-                  d.setDate(d.getDate() - 1)
-                  fechaEsperada = d.toISOString().split('T')[0]
+                  fechaEsperada = sumarDias(fechaEsperada, -1)
                 } else if (fecha < fechaEsperada) {
                   break
                 }

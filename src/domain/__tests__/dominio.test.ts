@@ -5,6 +5,7 @@ import { agruparPorFecha, eventosCalendario, eventosDelDia } from '../calendar'
 import { sugerenciaDeEstudio, tareasDeHoy, temasEnEstudio } from '../today'
 import { agruparTareas } from '../tasks'
 import { crearRepasos, repasosPendientes, estadoTrasCompletarRepaso } from '../spacedRepetition'
+import { formatearFechaCorta, isoDeFecha, sumarDias } from '../dates'
 
 const HOY = '2026-11-13'
 
@@ -323,5 +324,18 @@ describe('temasEnEstudio', () => {
       { ...tema('c', 'mat', 'estudiando'), actualizadoEn: '2026-11-11T10:00:00Z' },
     ]
     expect(temasEnEstudio(temas).map((t) => t.id)).toEqual(['c', 'a'])
+  })
+})
+
+describe('fechas', () => {
+  it('formatea una fecha ISO y no rompe con valores vacíos o inválidos', () => {
+    expect(formatearFechaCorta('2026-11-13')).toBe('13 nov')
+    expect(formatearFechaCorta('')).toBe('')
+    expect(formatearFechaCorta('no-es-fecha')).toBe('')
+  })
+
+  it('trabaja con fechas locales al sumar días y convertir a ISO', () => {
+    expect(sumarDias('2026-11-01', -1)).toBe('2026-10-31')
+    expect(isoDeFecha(new Date(2026, 10, 13))).toBe('2026-11-13')
   })
 })

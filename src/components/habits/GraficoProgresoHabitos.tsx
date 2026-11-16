@@ -76,13 +76,7 @@ function generarDatosSemana(habitos: Habito[], registros: RegistroHabito[], habi
       const registro = registros.find((r) => r.habitoId === habitoId && r.fecha === fechaStr)
       const completado = registro?.completado ?? false
 
-      if (habito.objetivo && typeof registro?.valor === 'number') {
-        item[`h${i}_valor`] = registro.valor
-        item[`h${i}_objetivo`] = habito.objetivo
-      } else {
-        item[`h${i}`] = seEspera ? (completado ? 1 : 0) : 0
-      }
-      item[`h${i}_esperado`] = seEspera ? 1 : 0
+      item[`h${i}`] = seEspera ? (completado ? 1 : 0) : 0
     })
 
     return item
@@ -108,7 +102,6 @@ function generarDatosMes(habitos: Habito[], registros: RegistroHabito[], habitos
 
       let completados = 0
       let esperados = 0
-      let totalValor = 0
 
       const diasSemana = eachDayOfInterval({ start: inicioSemana, end: finSemana })
       for (const dia of diasSemana) {
@@ -135,18 +128,10 @@ function generarDatosMes(habitos: Habito[], registros: RegistroHabito[], habitos
           esperados++
           const registro = registros.find((r) => r.habitoId === habitoId && r.fecha === fechaStr)
           if (registro?.completado) completados++
-          if (habito.objetivo && typeof registro?.valor === 'number') {
-            totalValor += registro.valor
-          }
         }
       }
 
-      if (habito.objetivo) {
-        item[`h${i}_valor`] = totalValor
-        item[`h${i}_objetivo`] = habito.objetivo * esperados
-      } else {
-        item[`h${i}`] = esperados > 0 ? Math.round((completados / esperados) * 100) : 0
-      }
+      item[`h${i}`] = esperados > 0 ? Math.round((completados / esperados) * 100) : 0
     })
 
     return item
@@ -172,7 +157,6 @@ function generarDatosAño(habitos: Habito[], registros: RegistroHabito[], habito
 
       let completados = 0
       let esperados = 0
-      let totalValor = 0
 
       const diasMes = eachDayOfInterval({ start: inicioMes, end: finMes })
       for (const dia of diasMes) {
@@ -199,18 +183,10 @@ function generarDatosAño(habitos: Habito[], registros: RegistroHabito[], habito
           esperados++
           const registro = registros.find((r) => r.habitoId === habitoId && r.fecha === fechaStr)
           if (registro?.completado) completados++
-          if (habito.objetivo && typeof registro?.valor === 'number') {
-            totalValor += registro.valor
-          }
         }
       }
 
-      if (habito.objetivo) {
-        item[`h${i}_valor`] = totalValor
-        item[`h${i}_objetivo`] = habito.objetivo * esperados
-      } else {
-        item[`h${i}`] = esperados > 0 ? Math.round((completados / esperados) * 100) : 0
-      }
+      item[`h${i}`] = esperados > 0 ? Math.round((completados / esperados) * 100) : 0
     })
 
     return item
@@ -341,13 +317,11 @@ export function GraficoProgresoHabitos({
                 formatter={(value: unknown, name: string | number | undefined) => {
                   const numValue = typeof value === 'number' ? value : 0
                   const nameStr = String(name ?? '')
-                  const habitoInfo = clavesHabitos.find((h) => nameStr === h.clave || nameStr === `${h.clave}_valor`)
-                  if (!habitoInfo) return [numValue, nameStr]
-                  const habito = habitoInfo.habito
-                  if (habito?.objetivo && nameStr.includes('_valor')) {
-                    return [numValue, `${habito.nombre} (${habito.unidad ?? 'unidades'})`]
-                  }
-                  return [numValue === 1 ? 'Completado' : numValue === 0 ? 'Pendiente' : numValue, habito?.nombre ?? nameStr]
+                  const habito = clavesHabitos.find((h) => nameStr === h.clave)?.habito
+                  return [
+                    numValue === 1 ? 'Completado' : numValue === 0 ? 'Pendiente' : numValue,
+                    habito?.nombre ?? nameStr,
+                  ]
                 }}
               />
               <Legend
@@ -399,12 +373,7 @@ export function GraficoProgresoHabitos({
                 formatter={(value: unknown, name: string | number | undefined) => {
                   const numValue = typeof value === 'number' ? value : 0
                   const nameStr = String(name ?? '')
-                  const habitoInfo = clavesHabitos.find((h) => nameStr === h.clave || nameStr === `${h.clave}_valor`)
-                  if (!habitoInfo) return [numValue, nameStr]
-                  const habito = habitoInfo.habito
-                  if (habito?.objetivo && nameStr.includes('_valor')) {
-                    return [numValue, `${habito.nombre} (${habito.unidad ?? 'unidades'})`]
-                  }
+                  const habito = clavesHabitos.find((h) => nameStr === h.clave)?.habito
                   return [`${numValue}%`, habito?.nombre ?? nameStr]
                 }}
               />

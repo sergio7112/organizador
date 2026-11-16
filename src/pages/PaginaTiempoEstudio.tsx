@@ -11,10 +11,16 @@ import { cn } from '../lib/format'
 export function PaginaTiempoEstudio() {
   const { datos, crearSesionEstudio, actualizarSesionEstudio, eliminarSesionEstudio } = useAppStore()
   const [vista, setVista] = useState<'lista' | 'graficos'>('lista')
+  const [solicitudNueva, setSolicitudNueva] = useState(0)
 
   const asignaturasConSesiones = datos.asignaturas.filter((a) =>
     datos.sesionesEstudio.some((s) => s.asignaturaId === a.id),
   )
+
+  const abrirNuevaSesion = () => {
+    setVista('lista')
+    setSolicitudNueva((n) => n + 1)
+  }
 
   return (
     <div className="animar-entrada grid gap-6">
@@ -22,7 +28,7 @@ export function PaginaTiempoEstudio() {
         titulo="Tiempo de estudio"
         descripcion="Registra tus sesiones y analiza cuánto dedicas a cada asignatura"
         accion={
-          <Boton onClick={() => setVista('lista')}>
+          <Boton onClick={abrirNuevaSesion}>
             <Plus size={18} className="mr-1" /> Nueva sesión
           </Boton>
         }
@@ -65,6 +71,8 @@ export function PaginaTiempoEstudio() {
           onCrear={crearSesionEstudio}
           onActualizar={actualizarSesionEstudio}
           onEliminar={eliminarSesionEstudio}
+          solicitudNueva={solicitudNueva}
+          onSolicitudAtendida={() => setSolicitudNueva(0)}
         />
       ) : (
         <GraficoTiempoEstudio
@@ -136,19 +144,6 @@ export function PaginaTiempoEstudio() {
             })}
           </div>
         </section>
-      )}
-
-      {vista === 'lista' && datos.sesionesEstudio.length === 0 && (
-        <Tarjeta className="py-12 text-center">
-          <Clock size={48} className="mx-auto mb-4 text-[var(--texto-suave)]" />
-          <h3 className="text-lg font-medium mb-2">No hay sesiones registradas</h3>
-          <p className="text-[var(--texto-suave)] mb-4 max-w-xs mx-auto">
-            Empieza a trackear tu tiempo de estudio para ver estadísticas y progreso por asignatura.
-          </p>
-          <Boton onClick={() => setVista('lista')}>
-            <Plus size={18} className="mr-1" /> Registrar primera sesión
-          </Boton>
-        </Tarjeta>
       )}
     </div>
   )

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Modal } from '../ui/Modal'
 import { Boton } from '../ui/Boton'
 import { Campo } from '../ui/Campo'
+import { hoyISO } from '../../domain/dates'
 import type { EntradaSesionEstudio, Asignatura } from '../../domain/types'
 
 interface ModalSesionEstudioProps {
@@ -28,7 +29,6 @@ export function ModalSesionEstudio({
 
   useEffect(() => {
     if (abierto) {
-      const hoy = new Date().toISOString().split('T')[0]
       if (sesionExistente) {
         setAsignaturaId(sesionExistente.asignaturaId)
         setFecha(sesionExistente.fecha)
@@ -37,7 +37,7 @@ export function ModalSesionEstudio({
         setNotas(sesionExistente.notas ?? '')
       } else {
         setAsignaturaId(asignaturas[0]?.id ?? '')
-        setFecha(hoy)
+        setFecha(hoyISO())
         const ahora = new Date()
         const hora = ahora.getHours().toString().padStart(2, '0')
         const minuto = ahora.getMinutes().toString().padStart(2, '0')
@@ -100,6 +100,12 @@ export function ModalSesionEstudio({
       titulo={sesionExistente ? 'Editar sesión de estudio' : 'Nueva sesión de estudio'}
     >
       <form onSubmit={manejarEnvio} className="grid gap-4">
+        {asignaturas.length === 0 && (
+          <p className="rounded-xl bg-[var(--aviso-suave)] p-3 text-sm text-[var(--aviso)]">
+            Crea una asignatura antes de registrar sesiones de estudio.
+          </p>
+        )}
+
         <Campo etiqueta="Asignatura" obligatorio>
           <select
             value={asignaturaId}
@@ -113,7 +119,6 @@ export function ModalSesionEstudio({
               </option>
             ))}
           </select>
-          {error && <p className="text-sm text-[var(--peligro)]">{error}</p>}
         </Campo>
 
         <Campo etiqueta="Fecha" obligatorio>
@@ -121,10 +126,9 @@ export function ModalSesionEstudio({
             type="date"
             value={fecha}
             onChange={(e) => setFecha(e.target.value)}
-            max={new Date().toISOString().split('T')[0]}
+            max={hoyISO()}
             className="rounded-xl border border-[var(--borde)] bg-[var(--fondo)] px-3 py-2.5"
           />
-          {error && <p className="text-sm text-[var(--peligro)]">{error}</p>}
         </Campo>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -168,7 +172,9 @@ export function ModalSesionEstudio({
           <Boton variante="secundario" type="button" onClick={onCerrar}>
             Cancelar
           </Boton>
-          <Boton type="submit">{sesionExistente ? 'Guardar cambios' : 'Añadir sesión'}</Boton>
+          <Boton type="submit" disabled={asignaturas.length === 0}>
+            {sesionExistente ? 'Guardar cambios' : 'Añadir sesión'}
+          </Boton>
         </div>
       </form>
     </Modal>

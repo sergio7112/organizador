@@ -9,6 +9,7 @@ import {
   format,
   isSameDay,
   isSameMonth,
+  isValid,
   parseISO,
   startOfMonth,
   startOfWeek,
@@ -64,9 +65,10 @@ export function textoDias(iso: string): string {
   return `Hace ${Math.abs(dias)} días`
 }
 
-/** "13 nov" */
+/** "13 nov" (cadena vacía si la fecha no es válida). */
 export function fechaCorta(iso: string): string {
-  return format(parseISO(iso), 'd MMM', { locale: es })
+  const fecha = parseISO(iso)
+  return iso && isValid(fecha) ? format(fecha, 'd MMM', { locale: es }) : ''
 }
 
 /** "vie, 13 nov" */
@@ -100,9 +102,9 @@ export function diasDeMes(referencia: Date): Date[] {
 
 export { isSameMonth, isSameDay }
 
-/** "13 nov" */
+/** "13 nov" (cadena vacía si la fecha no es válida). */
 export function formatearFechaCorta(iso: string): string {
-  return format(parseISO(iso), 'd MMM', { locale: es })
+  return fechaCorta(iso)
 }
 
 /** "14:30" */
