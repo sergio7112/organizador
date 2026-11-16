@@ -14,7 +14,7 @@ export function useAplicarTema() {
       document.documentElement.classList.toggle('dark', oscuro)
       document
         .querySelector('meta[name="theme-color"]')
-        ?.setAttribute('content', oscuro ? '#121212' : '#e60023')
+        ?.setAttribute('content', oscuro ? '#0f1419' : '#1f4e79')
     }
 
     aplicar()

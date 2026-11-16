@@ -2,8 +2,8 @@ import type { Datos } from './types'
 
 /**
  * Equivalencias entre los colores fríos que usaban las versiones anteriores
- * y la paleta cálida actual. Se aplica al cargar datos guardados para que las
- * asignaturas y proyectos existentes encajen con el tema rojo y blanco.
+ * y la paleta actual. Se aplica al cargar datos guardados para que las
+ * asignaturas y proyectos existentes conserven un color coherente.
  */
 const EQUIVALENCIAS_CALIDAS: Record<string, string> = {
   '#4f46e5': '#9f1239', // Índigo -> Granate
@@ -16,12 +16,12 @@ const EQUIVALENCIAS_CALIDAS: Record<string, string> = {
   '#e11d48': '#db2777', // Rosa antiguo -> Rosa
 }
 
-/** Devuelve el equivalente cálido de un color antiguo, o el mismo color. */
+/** Devuelve el equivalente actual de un color antiguo, o el mismo color. */
 export function colorCalido(color: string): string {
   return EQUIVALENCIAS_CALIDAS[color.toLowerCase()] ?? color
 }
 
-/** Adapta los colores de asignaturas y proyectos a la paleta cálida. */
+/** Adapta los colores de asignaturas y proyectos a la paleta actual. */
 export function migrarColoresCalidos(datos: Partial<Datos>): Partial<Datos> {
   return {
     ...datos,
@@ -40,5 +40,5 @@ export function migrarColoresCalidos(datos: Partial<Datos>): Partial<Datos> {
   }
 }
 
-/** Paleta cálida, en sintonía con el rojo principal de la app. */
+/** Paleta de colores para asignaturas, proyectos y hábitos. */
 export { PALETA } from './types'

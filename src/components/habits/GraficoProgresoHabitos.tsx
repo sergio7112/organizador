@@ -25,6 +25,7 @@ import {
   eachMonthOfInterval,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { PALETA } from '../../domain/types'
 import type { Habito, RegistroHabito } from '../../domain/types'
 
 type VistaGrafico = 'semana' | 'mes' | 'año'
@@ -36,10 +37,7 @@ interface GraficoProgresoHabitosProps {
   onCambiarSeleccion: (ids: string[]) => void
 }
 
-const COLORES_GRAFICO = [
-  '#e60023', '#9f1239', '#c2185b', '#db2777', '#f0616d',
-  '#c2410c', '#ea580c', '#d97706', '#a16207', '#86198f', '#78716c',
-]
+const COLORES_GRAFICO = PALETA.map((color) => color.valor)
 
 function generarDatosSemana(habitos: Habito[], registros: RegistroHabito[], habitosSeleccionados: string[]) {
   const hoy = new Date()
