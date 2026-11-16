@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { colorCalido, migrarColoresCalidos } from '../colors'
 
-describe('paleta cálida', () => {
+describe('migración de colores antiguos', () => {
   it('convierte los colores fríos de versiones anteriores', () => {
     expect(colorCalido('#4f46e5')).toBe('#9f1239')
     expect(colorCalido('#2563eb')).toBe('#f0616d')

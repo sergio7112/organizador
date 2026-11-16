@@ -1,5 +1,6 @@
 import { Link, NavLink } from 'react-router-dom'
-import { GraduationCap, Settings } from 'lucide-react'
+import { Settings } from 'lucide-react'
+import { Logotipo } from '../ui/Logotipo'
 import { SECCIONES, SECCION_AJUSTES } from './navegacion'
 import { cn } from '../../lib/format'
 
@@ -13,9 +14,7 @@ export function BarraLateral() {
   return (
     <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-[var(--borde)] bg-[var(--superficie)] px-3 py-5 md:flex">
       <Link to="/hoy" className="mb-6 flex items-center gap-2.5 px-2">
-        <span className="grid size-9 place-items-center rounded-[10px] bg-[var(--primario)] text-[var(--primario-contraste)]">
-          <GraduationCap size={20} />
-        </span>
+        <Logotipo className="size-9 shrink-0" />
         <span className="min-w-0">
           <span className="block text-sm font-semibold leading-tight">Organizador</span>
           <span className="block text-xs text-[var(--texto-suave)]">

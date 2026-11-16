@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { NavLink } from 'react-router-dom'
-import { GraduationCap, Settings, X } from 'lucide-react'
+import { Settings, X } from 'lucide-react'
+import { Logotipo } from '../ui/Logotipo'
 import { SECCIONES, SECCION_AJUSTES } from './navegacion'
 import { cn } from '../../lib/format'
 
@@ -53,8 +54,8 @@ export function MenuMovil({ abierto, onCerrar }: MenuMovilProps) {
       >
         <div className="flex items-center justify-between gap-3 px-4 py-4">
           <div className="flex min-w-0 items-center gap-2.5">
-            <span className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-[var(--primario)] text-[var(--primario-contraste)]">
-              <GraduationCap size={19} />
+            <span className="grid size-9 shrink-0 place-items-center">
+              <Logotipo className="size-9" />
             </span>
             <span className="min-w-0">
               <span id={idTitulo} className="block text-[15px] font-semibold leading-tight">

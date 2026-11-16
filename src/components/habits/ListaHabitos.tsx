@@ -6,6 +6,7 @@ import { Boton } from '../ui/Boton'
 import { DialogoConfirmacion } from '../ui/DialogoConfirmacion'
 import { Etiqueta } from '../ui/Etiquetas'
 import { hoyISO, isoDeFecha, sumarDias } from '../../domain/dates'
+import { habitoSeEspera } from '../../domain/habits'
 import type { Habito, RegistroHabito } from '../../domain/types'
 import { ModalHabito } from './ModalHabito'
 
@@ -70,27 +71,7 @@ function calcularProgresoSemanal(habito: Habito, registros: RegistroHabito[]): {
   )
 
   for (let d = new Date(inicioSemana); d <= finSemana; d.setDate(d.getDate() + 1)) {
-    const diaSemana = d.getDay()
-
-    let seEspera = false
-    switch (habito.frecuencia) {
-      case 'diaria':
-        seEspera = true
-        break
-      case 'semanal':
-        seEspera = habito.diasSemana?.includes(diaSemana) ?? false
-        break
-      case 'mensual':
-        seEspera = habito.diaMes === d.getDate()
-        break
-      case 'personalizada':
-        seEspera = habito.diasSemana?.includes(diaSemana) ?? false
-        break
-    }
-
-    if (seEspera) {
-      diasEsperados++
-    }
+    if (habitoSeEspera(habito, isoDeFecha(d))) diasEsperados++
   }
 
   let completados = 0

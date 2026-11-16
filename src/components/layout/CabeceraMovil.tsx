@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { GraduationCap, Menu, Settings } from 'lucide-react'
+import { Menu, Settings } from 'lucide-react'
+import { Logotipo } from '../ui/Logotipo'
 import { MenuMovil } from './MenuMovil'
 
 export function CabeceraMovil() {
@@ -28,9 +29,7 @@ export function CabeceraMovil() {
           to="/hoy"
           className="flex min-w-0 items-center justify-center gap-2 text-[15px] font-semibold tracking-tight"
         >
-          <span className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-[var(--primario)] text-[var(--primario-contraste)]">
-            <GraduationCap size={17} />
-          </span>
+          <Logotipo className="size-8 shrink-0" />
           <span className="truncate">Organizador</span>
         </Link>
 

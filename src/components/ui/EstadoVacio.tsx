@@ -13,7 +13,7 @@ export function EstadoVacio({
   accion?: ReactNode
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-[var(--borde)] px-6 py-12 text-center">
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--borde)] px-6 py-12 text-center">
       <span className="mb-3 grid size-12 place-items-center rounded-2xl bg-[var(--primario-suave)] text-[var(--primario)] ring-1 ring-[var(--primario-suave)]">
         <Icono size={22} />
       </span>
