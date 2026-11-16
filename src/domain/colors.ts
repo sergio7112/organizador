@@ -33,5 +33,24 @@ export function migrarColoresCalidos(datos: Partial<Datos>): Partial<Datos> {
       ...proyecto,
       color: colorCalido(proyecto.color),
     })),
+    habitos: datos.habitos?.map((habito) => ({
+      ...habito,
+      color: colorCalido(habito.color),
+    })),
   }
 }
+
+/** Paleta cálida, en sintonía con el rojo principal de la app. */
+export const PALETA = [
+  { nombre: 'Rojo', valor: '#e60023' },
+  { nombre: 'Granate', valor: '#9f1239' },
+  { nombre: 'Cereza', valor: '#c2185b' },
+  { nombre: 'Rosa', valor: '#db2777' },
+  { nombre: 'Coral', valor: '#f0616d' },
+  { nombre: 'Terracota', valor: '#c2410c' },
+  { nombre: 'Naranja', valor: '#ea580c' },
+  { nombre: 'Ámbar', valor: '#d97706' },
+  { nombre: 'Mostaza', valor: '#a16207' },
+  { nombre: 'Ciruela', valor: '#86198f' },
+  { nombre: 'Piedra', valor: '#78716c' },
+] as const

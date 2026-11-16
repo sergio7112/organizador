@@ -87,6 +87,9 @@ const DATOS: Datos = {
       resuelto: false,
     },
   ],
+  habitos: [],
+  registrosHabitos: [],
+  sesionesEstudio: [],
   ajustes: {
     tema: 'oscuro',
     vistaCalendario: 'semana',

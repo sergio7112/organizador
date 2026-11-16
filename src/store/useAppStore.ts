@@ -7,8 +7,11 @@ import type {
   ErrorTema,
   EstadoTema,
   Examen,
+  Habito,
   ItemChecklist,
   Proyecto,
+  RegistroHabito,
+  SesionEstudio,
   Tarea,
   Tema,
 } from '../domain/types'
@@ -25,6 +28,9 @@ export type EntradaProyecto = Pick<
   Proyecto,
   'nombre' | 'color' | 'descripcion' | 'notasMarkdown'
 >
+export type EntradaHabito = Omit<Habito, 'id' | 'creadoEn' | 'orden' | 'archivado'>
+export type EntradaRegistroHabito = Omit<RegistroHabito, 'id' | 'creadoEn'>
+export type EntradaSesionEstudio = Omit<SesionEstudio, 'id' | 'creadoEn' | 'duracionMinutos'>
 
 export interface Acciones {
   crearAsignatura: (datos: { nombre: string; color: string }) => string
@@ -71,6 +77,24 @@ export interface Acciones {
     cambios: Partial<Pick<ErrorTema, 'queFallo' | 'porQue' | 'resuelto'>>,
   ) => void
   eliminarError: (id: string) => void
+
+  // Hábitos
+  crearHabito: (datos: EntradaHabito) => string
+  actualizarHabito: (id: string, cambios: Partial<EntradaHabito>) => void
+  eliminarHabito: (id: string) => void
+  archivarHabito: (id: string, archivado: boolean) => void
+  reordenarHabitos: (ids: string[]) => void
+
+  // Registros de hábitos
+  crearRegistroHabito: (datos: EntradaRegistroHabito) => string
+  actualizarRegistroHabito: (id: string, cambios: Partial<EntradaRegistroHabito>) => void
+  eliminarRegistroHabito: (id: string) => void
+  alternarRegistroHabito: (habitoId: string, fecha: string) => void
+
+  // Sesiones de estudio
+  crearSesionEstudio: (datos: EntradaSesionEstudio) => string
+  actualizarSesionEstudio: (id: string, cambios: Partial<EntradaSesionEstudio>) => void
+  eliminarSesionEstudio: (id: string) => void
 
   cambiarAjustes: (cambios: Partial<Ajustes>) => void
   reemplazarDatos: (datos: Datos) => void
@@ -436,6 +460,177 @@ export const useAppStore = create<Tienda>()(
           editar((datos) => ({
             ...datos,
             errores: datos.errores.filter((error) => error.id !== id),
+          })),
+
+        // Hábitos
+        crearHabito: (entrada) => {
+          const id = nuevoId()
+          editar((datos) => ({
+            ...datos,
+            habitos: [
+              ...datos.habitos,
+              {
+                ...entrada,
+                nombre: entrada.nombre.trim(),
+                descripcion: entrada.descripcion?.trim(),
+                id,
+                archivado: false,
+                orden: datos.habitos.reduce(
+                  (maximo, habito) => Math.max(maximo, habito.orden),
+                  -1,
+                ) + 1,
+                creadoEn: AHORA(),
+              },
+            ],
+          }))
+          return id
+        },
+
+        actualizarHabito: (id, cambios) =>
+          editar((datos) => ({
+            ...datos,
+            habitos: datos.habitos.map((habito) =>
+              habito.id === id ? { ...habito, ...cambios } : habito,
+            ),
+          })),
+
+        eliminarHabito: (id) =>
+          editar((datos) => ({
+            ...datos,
+            habitos: datos.habitos.filter((habito) => habito.id !== id),
+            registrosHabitos: datos.registrosHabitos.filter(
+              (registro) => registro.habitoId !== id,
+            ),
+          })),
+
+        archivarHabito: (id, archivado) =>
+          editar((datos) => ({
+            ...datos,
+            habitos: datos.habitos.map((habito) =>
+              habito.id === id ? { ...habito, archivado } : habito,
+            ),
+          })),
+
+        reordenarHabitos: (ids) =>
+          editar((datos) => ({
+            ...datos,
+            habitos: ids.map((id, index) => {
+              const habito = datos.habitos.find((h) => h.id === id)
+              return habito ? { ...habito, orden: index } : null
+            }).filter((h): h is Habito => h !== null),
+          })),
+
+        // Registros de hábitos
+        crearRegistroHabito: (entrada) => {
+          const id = nuevoId()
+          editar((datos) => ({
+            ...datos,
+            registrosHabitos: [
+              ...datos.registrosHabitos,
+              {
+                ...entrada,
+                id,
+                creadoEn: AHORA(),
+              },
+            ],
+          }))
+          return id
+        },
+
+        actualizarRegistroHabito: (id, cambios) =>
+          editar((datos) => ({
+            ...datos,
+            registrosHabitos: datos.registrosHabitos.map((registro) =>
+              registro.id === id ? { ...registro, ...cambios } : registro,
+            ),
+          })),
+
+        eliminarRegistroHabito: (id) =>
+          editar((datos) => ({
+            ...datos,
+            registrosHabitos: datos.registrosHabitos.filter(
+              (registro) => registro.id !== id,
+            ),
+          })),
+
+        alternarRegistroHabito: (habitoId, fecha) =>
+          editar((datos) => {
+            const existente = datos.registrosHabitos.find(
+              (r) => r.habitoId === habitoId && r.fecha === fecha,
+            )
+            if (existente) {
+              return {
+                ...datos,
+                registrosHabitos: datos.registrosHabitos.map((r) =>
+                  r.id === existente.id ? { ...r, completado: !r.completado } : r,
+                ),
+              }
+            }
+            const habito = datos.habitos.find((h) => h.id === habitoId)
+            return {
+              ...datos,
+              registrosHabitos: [
+                ...datos.registrosHabitos,
+                {
+                  id: nuevoId(),
+                  habitoId,
+                  fecha,
+                  completado: true,
+                  valor: habito?.objetivo ? 1 : undefined,
+                  creadoEn: AHORA(),
+                },
+              ],
+            }
+          }),
+
+        // Sesiones de estudio
+        crearSesionEstudio: (entrada) => {
+          const id = nuevoId()
+          const inicio = new Date(`1970-01-01T${entrada.inicio}:00`)
+          const fin = new Date(`1970-01-01T${entrada.fin}:00`)
+          const duracionMinutos = Math.round((fin.getTime() - inicio.getTime()) / 60000)
+          editar((datos) => ({
+            ...datos,
+            sesionesEstudio: [
+              ...datos.sesionesEstudio,
+              {
+                ...entrada,
+                id,
+                duracionMinutos: Math.max(0, duracionMinutos),
+                creadoEn: AHORA(),
+              },
+            ],
+          }))
+          return id
+        },
+
+        actualizarSesionEstudio: (id, cambios) =>
+          editar((datos) => {
+            const sesion = datos.sesionesEstudio.find((s) => s.id === id)
+            if (!sesion) return datos
+            const inicio = cambios.inicio ?? sesion.inicio
+            const fin = cambios.fin ?? sesion.fin
+            const inicioDate = new Date(`1970-01-01T${inicio}:00`)
+            const finDate = new Date(`1970-01-01T${fin}:00`)
+            const duracionMinutos = Math.round(
+              (finDate.getTime() - inicioDate.getTime()) / 60000,
+            )
+            return {
+              ...datos,
+              sesionesEstudio: datos.sesionesEstudio.map((s) =>
+                s.id === id
+                  ? { ...s, ...cambios, duracionMinutos: Math.max(0, duracionMinutos) }
+                  : s,
+              ),
+            }
+          }),
+
+        eliminarSesionEstudio: (id) =>
+          editar((datos) => ({
+            ...datos,
+            sesionesEstudio: datos.sesionesEstudio.filter(
+              (sesion) => sesion.id !== id,
+            ),
           })),
 
         cambiarAjustes: (cambios) =>

@@ -3,6 +3,8 @@ export type Prioridad = 'alta' | 'media' | 'baja'
 export type EstadoTarea = 'pendiente' | 'en_curso' | 'hecha'
 export type TemaOscuro = 'claro' | 'oscuro' | 'sistema'
 export type VistaCalendario = 'semana' | 'mes'
+export type FrecuenciaHabito = 'diaria' | 'semanal' | 'mensual' | 'personalizada'
+export type PeriodoEstadistica = 'dia' | 'semana' | 'mes' | 'año' | 'todo'
 
 export interface Asignatura {
   id: string
@@ -162,3 +164,68 @@ export const PALETA = [
   { nombre: 'Ciruela', valor: '#86198f' },
   { nombre: 'Piedra', valor: '#78716c' },
 ] as const
+
+// ==================== HÁBITOS ====================
+
+export interface Habito {
+  id: string
+  nombre: string
+  descripcion?: string
+  color: string
+  frecuencia: FrecuenciaHabito
+  /** Días de la semana (0-6) para frecuencia 'semanal' o 'personalizada' */
+  diasSemana?: number[]
+  /** Día del mes (1-31) para frecuencia 'mensual' */
+  diaMes?: number
+  objetivo?: number // Para hábitos con contador (ej: leer 20 páginas)
+  unidad?: string // Unidad del objetivo (páginas, vasos, km, etc.)
+  archivado: boolean
+  creadoEn: string
+  orden: number
+}
+
+export interface RegistroHabito {
+  id: string
+  habitoId: string
+  fecha: string // YYYY-MM-DD
+  completado: boolean
+  valor?: number // Valor numérico si el hábito tiene objetivo
+  nota?: string
+  creadoEn: string
+}
+
+export type EntradaHabito = Omit<Habito, 'id' | 'creadoEn' | 'orden' | 'archivado'>
+export type EntradaRegistroHabito = Omit<RegistroHabito, 'id' | 'creadoEn'>
+
+// ==================== TIEMPO DE ESTUDIO ====================
+
+export interface SesionEstudio {
+  id: string
+  asignaturaId: string
+  fecha: string // YYYY-MM-DD
+  inicio: string // HH:mm
+  fin: string // HH:mm
+  duracionMinutos: number
+  notas?: string
+  creadoEn: string
+}
+
+export type EntradaSesionEstudio = Omit<SesionEstudio, 'id' | 'creadoEn' | 'duracionMinutos'>
+
+// ==================== DATOS GLOBALES ====================
+
+export interface Datos {
+  version: number
+  asignaturas: Asignatura[]
+  temas: Tema[]
+  examenes: Examen[]
+  tareas: Tarea[]
+  proyectos: Proyecto[]
+  checklist: ItemChecklist[]
+  repasos: Repaso[]
+  errores: ErrorTema[]
+  habitos: Habito[]
+  registrosHabitos: RegistroHabito[]
+  sesionesEstudio: SesionEstudio[]
+  ajustes: Ajustes
+}

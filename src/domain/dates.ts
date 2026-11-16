@@ -99,3 +99,13 @@ export function diasDeMes(referencia: Date): Date[] {
 }
 
 export { isSameMonth, isSameDay }
+
+/** "13 nov" */
+export function formatearFechaCorta(iso: string): string {
+  return format(parseISO(iso), 'd MMM', { locale: es })
+}
+
+/** "14:30" */
+export function formatearHora(hora: string): string {
+  return hora.slice(0, 5)
+}

@@ -238,6 +238,17 @@ export function fusionarTresVias(
     ),
     repasos: fusionarLista(base?.repasos ?? [], local.repasos, remoto.repasos),
     errores: fusionarLista(base?.errores ?? [], local.errores, remoto.errores),
+    habitos: fusionarLista(base?.habitos ?? [], local.habitos, remoto.habitos),
+    registrosHabitos: fusionarLista(
+      base?.registrosHabitos ?? [],
+      local.registrosHabitos,
+      remoto.registrosHabitos,
+    ),
+    sesionesEstudio: fusionarLista(
+      base?.sesionesEstudio ?? [],
+      local.sesionesEstudio,
+      remoto.sesionesEstudio,
+    ),
     ajustes: fusionarAjustes(base?.ajustes, local.ajustes, remoto.ajustes),
   }
 }

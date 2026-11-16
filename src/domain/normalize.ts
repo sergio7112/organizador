@@ -36,6 +36,9 @@ export function normalizarDatos(guardado?: Partial<Datos> | null): Datos {
     checklist: guardado?.checklist ?? [],
     repasos: guardado?.repasos ?? [],
     errores: guardado?.errores ?? [],
+    habitos: guardado?.habitos ?? [],
+    registrosHabitos: guardado?.registrosHabitos ?? [],
+    sesionesEstudio: guardado?.sesionesEstudio ?? [],
     ajustes,
   }
 }

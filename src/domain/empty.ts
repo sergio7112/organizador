@@ -13,6 +13,9 @@ export function crearDatosVacios(): Datos {
     checklist: [],
     repasos: [],
     errores: [],
+    habitos: [],
+    registrosHabitos: [],
+    sesionesEstudio: [],
     ajustes: {
       tema: 'sistema',
       vistaCalendario: 'mes',

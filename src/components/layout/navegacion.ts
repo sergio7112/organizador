@@ -9,6 +9,8 @@ import {
   RotateCcw,
   Settings,
   Sun,
+  Target,
+  Clock,
 } from 'lucide-react'
 
 export interface Seccion {
@@ -25,6 +27,8 @@ export const SECCIONES: Seccion[] = [
   { ruta: '/tareas', nombre: 'Tareas', icono: ListChecks, enMovil: true },
   { ruta: '/calendario', nombre: 'Calendario', icono: CalendarDays, enMovil: true },
   { ruta: '/proyectos', nombre: 'Proyectos', icono: FolderKanban, enMovil: true },
+  { ruta: '/habitos', nombre: 'Hábitos', icono: Target, enMovil: true },
+  { ruta: '/tiempo-estudio', nombre: 'Tiempo de estudio', icono: Clock, enMovil: true },
   { ruta: '/repaso', nombre: 'Repaso', icono: RotateCcw, enMovil: false },
   { ruta: '/errores', nombre: 'Errores', icono: AlertTriangle, enMovil: false },
 ]
