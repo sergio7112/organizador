@@ -41,7 +41,7 @@ export function ModalProyecto({
       actualizarProyecto(proyecto.id, {
         nombre: nombre.trim(),
         color,
-        ...(descripcion.trim() ? { descripcion: descripcion.trim() } : {}),
+        descripcion: descripcion.trim() || undefined,
       })
     } else {
       crearProyecto({

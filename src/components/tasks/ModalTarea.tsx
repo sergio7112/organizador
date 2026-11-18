@@ -64,13 +64,14 @@ export function ModalTarea({
     const [tipoVinculo, idVinculo] = vinculo.split(':')
     const entrada = {
       titulo: titulo.trim(),
-      ...(descripcion.trim() ? { descripcion: descripcion.trim() } : {}),
+      descripcion: descripcion.trim() || undefined,
       fechaLimite,
       prioridad,
       estado,
-      ...(tipoVinculo === 'asignatura' || tipoVinculo === 'proyecto'
-        ? { vinculo: { tipo: tipoVinculo, id: idVinculo } as const }
-        : {}),
+      vinculo:
+        tipoVinculo === 'asignatura' || tipoVinculo === 'proyecto'
+          ? ({ tipo: tipoVinculo, id: idVinculo } as const)
+          : undefined,
     }
 
     if (tarea) actualizarTarea(tarea.id, entrada)

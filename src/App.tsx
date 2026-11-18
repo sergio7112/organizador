@@ -15,8 +15,6 @@ import { PaginaCalendario } from './pages/PaginaCalendario'
 import { PaginaProyectos } from './pages/PaginaProyectos'
 import { PaginaHabitos } from './pages/PaginaHabitos'
 import { PaginaTiempoEstudio } from './pages/PaginaTiempoEstudio'
-import { PaginaRepaso } from './pages/PaginaRepaso'
-import { PaginaErrores } from './pages/PaginaErrores'
 import { PaginaAjustes } from './pages/PaginaAjustes'
 import { PaginaNoEncontrada } from './pages/PaginaNoEncontrada'
 
@@ -120,8 +118,6 @@ export default function App() {
         <Route path="proyectos/:id" element={<PaginaProyectoDetalle />} />
         <Route path="habitos" element={<PaginaHabitos />} />
         <Route path="tiempo-estudio" element={<PaginaTiempoEstudio />} />
-        <Route path="repaso" element={<PaginaRepaso />} />
-        <Route path="errores" element={<PaginaErrores />} />
         <Route path="ajustes" element={<PaginaAjustes correo={correo} />} />
         <Route path="*" element={<PaginaNoEncontrada />} />
       </Route>

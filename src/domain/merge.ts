@@ -183,19 +183,23 @@ function fusionarAjustes(
   local: Ajustes,
   remoto: Ajustes,
 ): Ajustes {
-  const elegir = (clave: 'tema' | 'vistaCalendario') => {
+  const elegir = <K extends keyof Ajustes>(clave: K) => {
     const valorBase = base?.[clave]
     const valorLocal = local[clave]
     const valorRemoto = remoto[clave]
     if (sonIguales(valorLocal, valorRemoto)) return valorLocal
     if (base && sonIguales(valorLocal, valorBase)) return valorRemoto
     if (base && sonIguales(valorRemoto, valorBase)) return valorLocal
-    return elegirDeterminista(valorLocal, valorRemoto)
+    return elegirDeterminista(valorLocal, valorRemoto) as Ajustes[K]
   }
 
   return {
-    tema: elegir('tema') as Ajustes['tema'],
-    vistaCalendario: elegir('vistaCalendario') as Ajustes['vistaCalendario'],
+    tema: elegir('tema'),
+    vistaCalendario: elegir('vistaCalendario'),
+    notificacionesResumenDiario: elegir('notificacionesResumenDiario'),
+    horaResumenDiario: elegir('horaResumenDiario'),
+    notificacionesProximosEventos: elegir('notificacionesProximosEventos'),
+    horaAvisosProximosEventos: elegir('horaAvisosProximosEventos'),
     // Es una preferencia de cada dispositivo: encender o apagar la
     // sincronización en el móvil no debe afectar al ordenador.
     sincronizacionAutomatica: local.sincronizacionAutomatica,
@@ -236,8 +240,6 @@ export function fusionarTresVias(
       local.checklist,
       remoto.checklist,
     ),
-    repasos: fusionarLista(base?.repasos ?? [], local.repasos, remoto.repasos),
-    errores: fusionarLista(base?.errores ?? [], local.errores, remoto.errores),
     habitos: fusionarLista(base?.habitos ?? [], local.habitos, remoto.habitos),
     registrosHabitos: fusionarLista(
       base?.registrosHabitos ?? [],

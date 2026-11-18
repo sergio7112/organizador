@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BookOpen, ChevronRight, Plus } from 'lucide-react'
 import type { Asignatura } from '../domain/types'
@@ -16,7 +16,20 @@ export function PaginaAsignaturas() {
   const [modal, setModal] = useState(false)
   const [editando, setEditando] = useState<Asignatura | null>(null)
 
-  const asignaturas = datos.asignaturas.slice().sort((a, b) => a.orden - b.orden)
+  const asignaturas = useMemo(
+    () => datos.asignaturas.slice().sort((a, b) => a.orden - b.orden),
+    [datos.asignaturas],
+  )
+
+  const temasPorAsignatura = useMemo(() => {
+    const mapa = new Map<string, typeof datos.temas>()
+    for (const tema of datos.temas) {
+      const lista = mapa.get(tema.asignaturaId)
+      if (lista) lista.push(tema)
+      else mapa.set(tema.asignaturaId, [tema])
+    }
+    return mapa
+  }, [datos.temas])
 
   return (
     <>
@@ -46,20 +59,13 @@ export function PaginaAsignaturas() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {asignaturas.map((asignatura) => {
-            const temas = datos.temas.filter(
-              (tema) => tema.asignaturaId === asignatura.id,
-            )
+            const temas = temasPorAsignatura.get(asignatura.id) ?? []
             const dominados = temas.filter((tema) => tema.estado === 'dominado').length
             const repasados = temas.filter((tema) => tema.estado === 'repasado').length
             const estudiando = temas.filter((tema) => tema.estado === 'estudiando').length
             const sinEmpezar = temas.filter((tema) => tema.estado === 'sin_empezar').length
             const porcentaje =
               temas.length === 0 ? 0 : Math.round((dominados / temas.length) * 100)
-            const erroresAbiertos = datos.errores.filter(
-              (error) =>
-                !error.resuelto &&
-                temas.some((tema) => tema.id === error.temaId),
-            ).length
 
             return (
               <div key={asignatura.id} className="relative">
@@ -107,12 +113,6 @@ export function PaginaAsignaturas() {
                         </Etiqueta>
                       )}
                       {sinEmpezar > 0 && <Etiqueta>{sinEmpezar} sin empezar</Etiqueta>}
-                      {erroresAbiertos > 0 && (
-                        <Etiqueta tono="aviso">
-                          {erroresAbiertos}{' '}
-                          {erroresAbiertos === 1 ? 'error abierto' : 'errores abiertos'}
-                        </Etiqueta>
-                      )}
                       {temas.length === 0 && <Etiqueta>Sin temario</Etiqueta>}
                     </div>
                   </Tarjeta>

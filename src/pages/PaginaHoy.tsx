@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Check, Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { aFecha, diasDeSemana, fechaLarga, hoyISO, isoDeFecha } from '../domain/dates'
+import type { Tarea } from '../domain/types'
 import { habitosDeHoy } from '../domain/habits'
 import { tareasDeHoy } from '../domain/today'
 import { useAppStore } from '../store/useAppStore'
@@ -67,23 +68,37 @@ export function PaginaHoy() {
   const fecha = fechaLarga(hoy)
 
   const habitos = habitosDeHoy(datos, hoy)
-  const registrosHoy = datos.registrosHabitos.filter((registro) => registro.fecha === hoy)
-  const habitosHechos = habitos.filter((habito) =>
-    registrosHoy.some((registro) => registro.habitoId === habito.id && registro.completado),
-  ).length
+  const registrosHoy = useMemo(() => {
+    const mapa = new Map<string, boolean>()
+    for (const registro of datos.registrosHabitos) {
+      if (registro.fecha === hoy) {
+        mapa.set(registro.habitoId, registro.completado)
+      }
+    }
+    return mapa
+  }, [datos.registrosHabitos, hoy])
+  const habitosHechos = habitos.filter((habito) => registrosHoy.get(habito.id)).length
 
   const pendientes = tareasDeHoy(datos.tareas, hoy)
   const atrasadas = pendientes.filter((tarea) => tarea.fechaLimite < hoy)
   const paraHoy = pendientes.filter((tarea) => tarea.fechaLimite === hoy)
 
-  const semana = diasDeSemana(aFecha(hoy))
+  const tareasActivasPorFecha = useMemo(() => {
+    const mapa = new Map<string, Tarea[]>()
+    for (const tarea of datos.tareas) {
+      if (tarea.estado === 'hecha') continue
+      const lista = mapa.get(tarea.fechaLimite)
+      if (lista) lista.push(tarea)
+      else mapa.set(tarea.fechaLimite, [tarea])
+    }
+    return mapa
+  }, [datos.tareas])
+
+  const semana = useMemo(() => diasDeSemana(aFecha(hoy)), [hoy])
   const restoDeSemana = semana
     .map((dia) => {
       const iso = isoDeFecha(dia)
-      return {
-        iso,
-        tareas: tareasDeHoy(datos.tareas, iso).filter((tarea) => tarea.fechaLimite === iso),
-      }
+      return { iso, tareas: tareasActivasPorFecha.get(iso) ?? [] }
     })
     .filter((grupo) => grupo.iso > hoy)
 
@@ -124,8 +139,8 @@ export function PaginaHoy() {
                 Empieza tu curso
               </h2>
               <p className="mt-1 text-sm text-[var(--texto-suave)]">
-                Crea tu primera asignatura para organizar el temario, los
-                exámenes y el repaso.
+                Crea tu primera asignatura para organizar el temario y los
+                exámenes.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -160,9 +175,7 @@ export function PaginaHoy() {
             <Tarjeta className="overflow-hidden">
               <ul className="divide-y divide-[var(--borde)]">
                 {habitos.map((habito) => {
-                  const hecho =
-                    registrosHoy.find((registro) => registro.habitoId === habito.id)
-                      ?.completado ?? false
+                  const hecho = registrosHoy.get(habito.id) ?? false
 
                   return (
                     <li key={habito.id}>
@@ -236,9 +249,7 @@ export function PaginaHoy() {
             {semana.map((dia) => {
               const iso = isoDeFecha(dia)
               const esHoyDia = iso === hoy
-              const cuantas = tareasDeHoy(datos.tareas, iso).filter(
-                (tarea) => tarea.fechaLimite === iso,
-              ).length
+              const cuantas = tareasActivasPorFecha.get(iso)?.length ?? 0
 
               return (
                 <div

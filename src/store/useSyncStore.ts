@@ -70,8 +70,9 @@ function estaVacio(datos: Datos): boolean {
     datos.tareas.length === 0 &&
     datos.proyectos.length === 0 &&
     datos.checklist.length === 0 &&
-    datos.repasos.length === 0 &&
-    datos.errores.length === 0
+    datos.habitos.length === 0 &&
+    datos.registrosHabitos.length === 0 &&
+    datos.sesionesEstudio.length === 0
   )
 }
 

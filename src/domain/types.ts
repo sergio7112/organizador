@@ -68,44 +68,17 @@ export interface ItemChecklist {
   orden: number
 }
 
-export interface Repaso {
-  id: string
-  temaId: string
-  fecha: string
-  intervaloDias: 1 | 3 | 7
-  programadoEn: string
-  completadoEn?: string
-}
-
-export interface ErrorTema {
-  id: string
-  temaId: string
-  queFallo: string
-  porQue: string
-  fecha: string
-  resuelto: boolean
-}
-
 export interface Ajustes {
   tema: TemaOscuro
   vistaCalendario: VistaCalendario
   sincronizacionAutomatica: boolean
+  notificacionesResumenDiario: boolean
+  horaResumenDiario: string
+  notificacionesProximosEventos: boolean
+  horaAvisosProximosEventos: string
 }
 
-export interface Datos {
-  version: number
-  asignaturas: Asignatura[]
-  temas: Tema[]
-  examenes: Examen[]
-  tareas: Tarea[]
-  proyectos: Proyecto[]
-  checklist: ItemChecklist[]
-  repasos: Repaso[]
-  errores: ErrorTema[]
-  ajustes: Ajustes
-}
-
-export const VERSION_DATOS = 1
+export const VERSION_DATOS = 2
 
 export const ESTADOS_TEMA: EstadoTema[] = [
   'sin_empezar',
@@ -167,6 +140,13 @@ export const PALETA = [
 
 // ==================== HÁBITOS ====================
 
+export const FRECUENCIAS_HABITO: FrecuenciaHabito[] = [
+  'diaria',
+  'semanal',
+  'mensual',
+  'personalizada',
+]
+
 export interface Habito {
   id: string
   nombre: string
@@ -222,8 +202,6 @@ export interface Datos {
   tareas: Tarea[]
   proyectos: Proyecto[]
   checklist: ItemChecklist[]
-  repasos: Repaso[]
-  errores: ErrorTema[]
   habitos: Habito[]
   registrosHabitos: RegistroHabito[]
   sesionesEstudio: SesionEstudio[]

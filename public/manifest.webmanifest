@@ -1,7 +1,7 @@
 {
   "name": "Organizador · Estudios",
   "short_name": "Organizador",
-  "description": "Organizador personal de asignaturas, temario, exámenes, tareas, proyectos y repaso.",
+  "description": "Organizador personal de asignaturas, temario, exámenes, tareas, proyectos, hábitos y tiempo de estudio.",
   "lang": "es",
   "dir": "ltr",
   "start_url": "./#/hoy",
@@ -35,11 +35,6 @@
       "name": "Hoy",
       "short_name": "Hoy",
       "url": "./#/hoy"
-    },
-    {
-      "name": "Repaso",
-      "short_name": "Repaso",
-      "url": "./#/repaso"
     },
     {
       "name": "Calendario",

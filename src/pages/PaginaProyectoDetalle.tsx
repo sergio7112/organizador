@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Check, FolderKanban, ListChecks, Pencil, Plus, Trash2 } from 'lucide-react'
@@ -27,7 +27,6 @@ export function PaginaProyectoDetalle() {
   const { id } = useParams()
   const navegar = useNavigate()
   const datos = useAppStore((estado) => estado.datos)
-  const actualizarProyecto = useAppStore((estado) => estado.actualizarProyecto)
   const eliminarProyecto = useAppStore((estado) => estado.eliminarProyecto)
   const crearItemChecklist = useAppStore((estado) => estado.crearItemChecklist)
   const actualizarItemChecklist = useAppStore(
@@ -45,6 +44,49 @@ export function PaginaProyectoDetalle() {
   const [vistaNotas, setVistaNotas] = useState<'escribir' | 'vista'>('escribir')
 
   const proyecto = datos.proyectos.find((item) => item.id === id)
+
+  // Las notas se editan en local y se guardan poco después de dejar de escribir,
+  // para no escribir en el almacén (y sincronizar) en cada pulsación.
+  const [notas, setNotas] = useState(proyecto?.notasMarkdown ?? '')
+  const notasRef = useRef(notas)
+  const notasGuardadasRef = useRef(proyecto?.notasMarkdown ?? '')
+  const temporizadorNotas = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const idProyecto = proyecto?.id
+
+  useEffect(() => {
+    const iniciales = proyecto?.notasMarkdown ?? ''
+    setNotas(iniciales)
+    notasRef.current = iniciales
+    notasGuardadasRef.current = iniciales
+
+    return () => {
+      if (temporizadorNotas.current) {
+        clearTimeout(temporizadorNotas.current)
+        temporizadorNotas.current = null
+      }
+      if (idProyecto && notasRef.current !== notasGuardadasRef.current) {
+        useAppStore.getState().actualizarProyecto(idProyecto, {
+          notasMarkdown: notasRef.current,
+        })
+      }
+    }
+    // Solo se reinicia al cambiar de proyecto; al escribir manda el estado local.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idProyecto])
+
+  const cambiarNotas = (valor: string) => {
+    setNotas(valor)
+    notasRef.current = valor
+    if (!idProyecto) return
+    if (temporizadorNotas.current) clearTimeout(temporizadorNotas.current)
+    temporizadorNotas.current = setTimeout(() => {
+      temporizadorNotas.current = null
+      notasGuardadasRef.current = valor
+      useAppStore.getState().actualizarProyecto(idProyecto, {
+        notasMarkdown: valor,
+      })
+    }, 500)
+  }
 
   const items = useMemo(
     () =>
@@ -224,12 +266,8 @@ export function PaginaProyectoDetalle() {
 
           {vistaNotas === 'escribir' ? (
             <AreaTexto
-              value={proyecto.notasMarkdown}
-              onChange={(evento) =>
-                actualizarProyecto(proyecto.id, {
-                  notasMarkdown: evento.target.value,
-                })
-              }
+              value={notas}
+              onChange={(evento) => cambiarNotas(evento.target.value)}
               placeholder={
                 '# Título\n\nEscribe tus notas con **Markdown**: listas, enlaces, código…'
               }
@@ -238,9 +276,9 @@ export function PaginaProyectoDetalle() {
             />
           ) : (
             <div className="prosa mt-3 min-h-72">
-              {proyecto.notasMarkdown.trim() ? (
+              {notas.trim() ? (
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {proyecto.notasMarkdown}
+                  {notas}
                 </ReactMarkdown>
               ) : (
                 <p className="text-[var(--texto-suave)]">

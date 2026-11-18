@@ -32,54 +32,49 @@ const FRECUENCIA_ETIQUETAS: Record<Habito['frecuencia'], string> = {
   personalizada: 'Personalizada',
 }
 
-function calcularRacha(habito: Habito, registros: RegistroHabito[], fechaFin: string = hoyISO()): number {
-  const registrosHabito = registros
-    .filter((r) => r.habitoId === habito.id && r.completado)
-    .map((r) => r.fecha)
-    .sort()
-    .reverse()
-
-  if (registrosHabito.length === 0) return 0
+function calcularRacha(
+  fechasCompletadas: Set<string> | undefined,
+  fechaFin: string,
+): number {
+  if (!fechasCompletadas || fechasCompletadas.size === 0) return 0
 
   let racha = 0
   let fechaActual = fechaFin
 
-  for (const fechaRegistro of registrosHabito) {
-    if (fechaRegistro === fechaActual) {
-      racha++
-      fechaActual = sumarDias(fechaActual, -1)
-    } else if (fechaRegistro < fechaActual) {
-      break
-    }
+  while (fechasCompletadas.has(fechaActual)) {
+    racha += 1
+    fechaActual = sumarDias(fechaActual, -1)
   }
 
   return racha
 }
 
-function calcularProgresoSemanal(habito: Habito, registros: RegistroHabito[]): { completados: number; total: number } {
-  const hoy = new Date(`${hoyISO()}T00:00:00`)
-  const inicioSemana = new Date(hoy)
-  inicioSemana.setDate(hoy.getDate() - ((hoy.getDay() + 6) % 7)) // Lunes
+function calcularProgresoSemanal(
+  habito: Habito,
+  fechasCompletadas: Set<string> | undefined,
+  hoy: string,
+): { completados: number; total: number } {
+  const fechaHoy = new Date(`${hoy}T00:00:00`)
+  const inicioSemana = new Date(fechaHoy)
+  inicioSemana.setDate(fechaHoy.getDate() - ((fechaHoy.getDay() + 6) % 7)) // Lunes
   const finSemana = new Date(inicioSemana)
   finSemana.setDate(inicioSemana.getDate() + 6)
 
-  let diasEsperados = 0
-  const registrosSet = new Set(
-    registros
-      .filter((r) => r.habitoId === habito.id && r.completado)
-      .map((r) => r.fecha),
-  )
-
-  for (let d = new Date(inicioSemana); d <= finSemana; d.setDate(d.getDate() + 1)) {
-    if (habitoSeEspera(habito, isoDeFecha(d))) diasEsperados++
-  }
-
   let completados = 0
-  for (let d = new Date(inicioSemana); d <= finSemana; d.setDate(d.getDate() + 1)) {
-    if (registrosSet.has(isoDeFecha(d))) completados++
+  let esperados = 0
+
+  for (
+    let dia = new Date(inicioSemana);
+    dia <= finSemana;
+    dia.setDate(dia.getDate() + 1)
+  ) {
+    const fecha = isoDeFecha(dia)
+    if (!habitoSeEspera(habito, fecha)) continue
+    esperados += 1
+    if (fechasCompletadas?.has(fecha)) completados += 1
   }
 
-  return { completados: Math.min(completados, diasEsperados), total: diasEsperados }
+  return { completados, total: esperados }
 }
 
 export function ListaHabitos({
@@ -127,6 +122,26 @@ export function ListaHabitos({
   )
 
   const coloresAsignados = habitos.map((h) => h.color)
+
+  const hoy = hoyISO()
+
+  const indiceRegistros = useMemo(() => {
+    const completadas = new Map<string, Set<string>>()
+    const estadoHoy = new Map<string, boolean>()
+
+    for (const registro of registros) {
+      if (registro.completado) {
+        const fechas = completadas.get(registro.habitoId)
+        if (fechas) fechas.add(registro.fecha)
+        else completadas.set(registro.habitoId, new Set([registro.fecha]))
+      }
+      if (registro.fecha === hoy) {
+        estadoHoy.set(registro.habitoId, registro.completado)
+      }
+    }
+
+    return { completadas, estadoHoy }
+  }, [registros, hoy])
 
   const manejarArrastreInicio = (e: React.DragEvent<HTMLDivElement>, id: string) => {
     e.dataTransfer.setData('text/plain', id)
@@ -182,12 +197,14 @@ export function ListaHabitos({
             }}
           >
             {habitosActivos.map((habito) => {
-              const { completados, total } = calcularProgresoSemanal(habito, registros)
-              const racha = calcularRacha(habito, registros)
-              const registroHoy = registros.find(
-                (r) => r.habitoId === habito.id && r.fecha === hoyISO(),
+              const fechasCompletadas = indiceRegistros.completadas.get(habito.id)
+              const { completados, total } = calcularProgresoSemanal(
+                habito,
+                fechasCompletadas,
+                hoy,
               )
-              const completadoHoy = registroHoy?.completado ?? false
+              const racha = calcularRacha(fechasCompletadas, hoy)
+              const completadoHoy = indiceRegistros.estadoHoy.get(habito.id) ?? false
 
               return (
                 <div
@@ -249,7 +266,7 @@ export function ListaHabitos({
                       {(habito.frecuencia !== 'mensual' || new Date().getDate() === (habito.diaMes ?? 0)) && (
                         <button
                           type="button"
-                          onClick={() => onAlternarRegistro(habito.id, hoyISO())}
+                          onClick={() => onAlternarRegistro(habito.id, hoy)}
                           className={cn(
                             'mt-3 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors',
                             completadoHoy

@@ -46,26 +46,81 @@ function formatearDuracion(minutos: number): string {
   return `${minutos}min`
 }
 
-function generarDatosSemana(sesiones: SesionEstudio[], asignaturas: Asignatura[]) {
+interface AgregadoSesiones {
+  /** Minutos por fecha y asignatura, calculados en una sola pasada. */
+  porFecha: Map<string, Map<string, number>>
+  porAsignatura: Map<string, { minutos: number; sesiones: number }>
+}
+
+function agregarSesiones(sesiones: SesionEstudio[]): AgregadoSesiones {
+  const porFecha = new Map<string, Map<string, number>>()
+  const porAsignatura = new Map<string, { minutos: number; sesiones: number }>()
+
+  for (const sesion of sesiones) {
+    let minutosDelDia = porFecha.get(sesion.fecha)
+    if (!minutosDelDia) {
+      minutosDelDia = new Map()
+      porFecha.set(sesion.fecha, minutosDelDia)
+    }
+    minutosDelDia.set(
+      sesion.asignaturaId,
+      (minutosDelDia.get(sesion.asignaturaId) ?? 0) + sesion.duracionMinutos,
+    )
+
+    const total = porAsignatura.get(sesion.asignaturaId)
+    if (total) {
+      total.minutos += sesion.duracionMinutos
+      total.sesiones += 1
+    } else {
+      porAsignatura.set(sesion.asignaturaId, {
+        minutos: sesion.duracionMinutos,
+        sesiones: 1,
+      })
+    }
+  }
+
+  return { porFecha, porAsignatura }
+}
+
+function minutosDelDia(
+  porFecha: Map<string, Map<string, number>>,
+  fecha: string,
+  asignaturaId: string,
+): number {
+  return porFecha.get(fecha)?.get(asignaturaId) ?? 0
+}
+
+function minutosEnFechas(
+  porFecha: Map<string, Map<string, number>>,
+  fechas: string[],
+  asignaturaId: string,
+): number {
+  let minutos = 0
+  for (const fecha of fechas) {
+    minutos += minutosDelDia(porFecha, fecha, asignaturaId)
+  }
+  return minutos
+}
+
+function generarDatosSemana(
+  porFecha: Map<string, Map<string, number>>,
+  asignaturas: Asignatura[],
+) {
   const hoy = new Date()
   const inicio = startOfWeek(hoy, { weekStartsOn: 1 })
   const fin = endOfWeek(hoy, { weekStartsOn: 1 })
   const dias = eachDayOfInterval({ start: inicio, end: fin })
 
-  const asignaturasConDatos = asignaturas.filter((a) =>
-    sesiones.some((s) => s.asignaturaId === a.id),
-  )
-
   return dias.map((dia) => {
-    const fechaStr = format(dia, 'yyyy-MM-dd')
-    const diaNombre = format(dia, 'EEE', { locale: es })
-    const item: Record<string, string | number> = { fecha: fechaStr, dia: diaNombre, total: 0 }
+    const fecha = format(dia, 'yyyy-MM-dd')
+    const item: Record<string, string | number> = {
+      fecha,
+      dia: format(dia, 'EEE', { locale: es }),
+      total: 0,
+    }
 
-    for (const asignatura of asignaturasConDatos) {
-      const sesionesDia = sesiones.filter(
-        (s) => s.asignaturaId === asignatura.id && s.fecha === fechaStr,
-      )
-      const minutos = sesionesDia.reduce((sum, s) => sum + s.duracionMinutos, 0)
+    for (const asignatura of asignaturas) {
+      const minutos = minutosDelDia(porFecha, fecha, asignatura.id)
       item[`asig_${asignatura.id}`] = minutos
       item.total = (item.total as number) + minutos
     }
@@ -74,32 +129,28 @@ function generarDatosSemana(sesiones: SesionEstudio[], asignaturas: Asignatura[]
   })
 }
 
-function generarDatosMes(sesiones: SesionEstudio[], asignaturas: Asignatura[]) {
+function generarDatosMes(
+  porFecha: Map<string, Map<string, number>>,
+  asignaturas: Asignatura[],
+) {
   const hoy = new Date()
   const inicio = startOfMonth(hoy)
   const fin = endOfMonth(hoy)
   const semanas = eachWeekOfInterval({ start: inicio, end: fin }, { weekStartsOn: 1 })
 
-  const asignaturasConDatos = asignaturas.filter((a) =>
-    sesiones.some((s) => s.asignaturaId === a.id),
-  )
-
   return semanas.map((semana) => {
     const inicioSemana = startOfWeek(semana, { weekStartsOn: 1 })
     const finSemana = endOfWeek(semana, { weekStartsOn: 1 })
-    const semanaLabel = `${format(inicioSemana, 'dd/MM', { locale: es })}`
-    const item: Record<string, string | number> = { semana: semanaLabel, total: 0 }
+    const fechas = eachDayOfInterval({ start: inicioSemana, end: finSemana }).map(
+      (dia) => format(dia, 'yyyy-MM-dd'),
+    )
+    const item: Record<string, string | number> = {
+      semana: format(inicioSemana, 'dd/MM', { locale: es }),
+      total: 0,
+    }
 
-    for (const asignatura of asignaturasConDatos) {
-      let minutos = 0
-      const diasSemana = eachDayOfInterval({ start: inicioSemana, end: finSemana })
-      for (const dia of diasSemana) {
-        const fechaStr = format(dia, 'yyyy-MM-dd')
-        const sesionesDia = sesiones.filter(
-          (s) => s.asignaturaId === asignatura.id && s.fecha === fechaStr,
-        )
-        minutos += sesionesDia.reduce((sum, s) => sum + s.duracionMinutos, 0)
-      }
+    for (const asignatura of asignaturas) {
+      const minutos = minutosEnFechas(porFecha, fechas, asignatura.id)
       item[`asig_${asignatura.id}`] = minutos
       item.total = (item.total as number) + minutos
     }
@@ -108,32 +159,28 @@ function generarDatosMes(sesiones: SesionEstudio[], asignaturas: Asignatura[]) {
   })
 }
 
-function generarDatosAño(sesiones: SesionEstudio[], asignaturas: Asignatura[]) {
+function generarDatosAño(
+  porFecha: Map<string, Map<string, number>>,
+  asignaturas: Asignatura[],
+) {
   const hoy = new Date()
   const inicio = new Date(hoy.getFullYear(), 0, 1)
   const fin = new Date(hoy.getFullYear(), 11, 31)
   const meses = eachMonthOfInterval({ start: inicio, end: fin })
 
-  const asignaturasConDatos = asignaturas.filter((a) =>
-    sesiones.some((s) => s.asignaturaId === a.id),
-  )
-
   return meses.map((mes) => {
     const inicioMes = startOfMonth(mes)
     const finMes = endOfMonth(mes)
-    const mesLabel = format(mes, 'MMM', { locale: es })
-    const item: Record<string, string | number> = { mes: mesLabel, total: 0 }
+    const fechas = eachDayOfInterval({ start: inicioMes, end: finMes }).map(
+      (dia) => format(dia, 'yyyy-MM-dd'),
+    )
+    const item: Record<string, string | number> = {
+      mes: format(mes, 'MMM', { locale: es }),
+      total: 0,
+    }
 
-    for (const asignatura of asignaturasConDatos) {
-      let minutos = 0
-      const diasMes = eachDayOfInterval({ start: inicioMes, end: finMes })
-      for (const dia of diasMes) {
-        const fechaStr = format(dia, 'yyyy-MM-dd')
-        const sesionesDia = sesiones.filter(
-          (s) => s.asignaturaId === asignatura.id && s.fecha === fechaStr,
-        )
-        minutos += sesionesDia.reduce((sum, s) => sum + s.duracionMinutos, 0)
-      }
+    for (const asignatura of asignaturas) {
+      const minutos = minutosEnFechas(porFecha, fechas, asignatura.id)
       item[`asig_${asignatura.id}`] = minutos
       item.total = (item.total as number) + minutos
     }
@@ -142,26 +189,36 @@ function generarDatosAño(sesiones: SesionEstudio[], asignaturas: Asignatura[]) 
   })
 }
 
-function generarDatosPorAsignatura(sesiones: SesionEstudio[], asignaturas: Asignatura[]) {
-  const asignaturasConDatos = asignaturas.filter((a) =>
-    sesiones.some((s) => s.asignaturaId === a.id),
-  )
+function generarDatosPorAsignatura(
+  porAsignatura: Map<string, { minutos: number; sesiones: number }>,
+  asignaturas: Asignatura[],
+) {
+  const datos: {
+    id: string
+    nombre: string
+    valor: number
+    color: string
+    numSesiones: number
+    promedio: number
+    porcentaje: number
+  }[] = []
 
-  return asignaturasConDatos.map((asignatura) => {
-    const sesionesAsig = sesiones.filter((s) => s.asignaturaId === asignatura.id)
-    const totalMinutos = sesionesAsig.reduce((sum, s) => sum + s.duracionMinutos, 0)
-    const numSesiones = sesionesAsig.length
-    const promedio = numSesiones > 0 ? Math.round(totalMinutos / numSesiones) : 0
-
-    return {
+  for (const asignatura of asignaturas) {
+    const total = porAsignatura.get(asignatura.id)
+    if (!total) continue
+    datos.push({
+      id: asignatura.id,
       nombre: asignatura.nombre,
-      valor: totalMinutos,
+      valor: total.minutos,
       color: asignatura.color,
-      numSesiones,
-      promedio,
+      numSesiones: total.sesiones,
+      promedio:
+        total.sesiones > 0 ? Math.round(total.minutos / total.sesiones) : 0,
       porcentaje: 0,
-    }
-  })
+    })
+  }
+
+  return datos
 }
 
 interface GraficoTiempoEstudioProps {
@@ -173,26 +230,37 @@ export function GraficoTiempoEstudio({ sesiones, asignaturas }: GraficoTiempoEst
   const [vista, setVista] = useState<VistaGrafico>('semana')
   const [tipoGrafico, setTipoGrafico] = useState<TipoGrafico>('barras')
   const [asignaturasSeleccionadas, setAsignaturasSeleccionadas] = useState<string[]>(
-    asignaturas.filter((a) => sesiones.some((s) => s.asignaturaId === a.id)).slice(0, 5).map((a) => a.id),
+    () => {
+      const conDatos = new Set(sesiones.map((s) => s.asignaturaId))
+      return asignaturas
+        .filter((a) => conDatos.has(a.id))
+        .slice(0, 5)
+        .map((a) => a.id)
+    },
   )
 
+  const agregados = useMemo(() => agregarSesiones(sesiones), [sesiones])
+
   const asignaturasConDatos = useMemo(
-    () => asignaturas.filter((a) => sesiones.some((s) => s.asignaturaId === a.id)),
-    [asignaturas, sesiones],
+    () => asignaturas.filter((a) => agregados.porAsignatura.has(a.id)),
+    [asignaturas, agregados],
   )
 
   const datosGrafico = useMemo(() => {
     switch (vista) {
       case 'semana':
-        return generarDatosSemana(sesiones, asignaturas)
+        return generarDatosSemana(agregados.porFecha, asignaturasConDatos)
       case 'mes':
-        return generarDatosMes(sesiones, asignaturas)
+        return generarDatosMes(agregados.porFecha, asignaturasConDatos)
       case 'año':
-        return generarDatosAño(sesiones, asignaturas)
+        return generarDatosAño(agregados.porFecha, asignaturasConDatos)
       case 'asignaturas':
-        return generarDatosPorAsignatura(sesiones, asignaturas)
+        return generarDatosPorAsignatura(
+          agregados.porAsignatura,
+          asignaturasConDatos,
+        )
     }
-  }, [vista, sesiones, asignaturas])
+  }, [vista, agregados, asignaturasConDatos])
 
   const totalGeneral = useMemo(
     () => sesiones.reduce((sum, s) => sum + s.duracionMinutos, 0),
@@ -200,10 +268,21 @@ export function GraficoTiempoEstudio({ sesiones, asignaturas }: GraficoTiempoEst
   )
 
   const datosPorAsignatura = useMemo(() => {
-    const arr = generarDatosPorAsignatura(sesiones, asignaturas)
+    const arr = generarDatosPorAsignatura(
+      agregados.porAsignatura,
+      asignaturasConDatos,
+    )
     const total = arr.reduce((sum, a) => sum + a.valor, 0)
-    return arr.map((a) => ({ ...a, porcentaje: total > 0 ? Math.round((a.valor / total) * 100) : 0 }))
-  }, [sesiones, asignaturas])
+    return arr.map((a) => ({
+      ...a,
+      porcentaje: total > 0 ? Math.round((a.valor / total) * 100) : 0,
+    }))
+  }, [agregados, asignaturasConDatos])
+
+  const totalesPorAsignatura = useMemo(
+    () => new Map(datosPorAsignatura.map((item) => [item.id, item.valor])),
+    [datosPorAsignatura],
+  )
 
   if (sesiones.length === 0) {
     return (
@@ -564,9 +643,7 @@ export function GraficoTiempoEstudio({ sesiones, asignaturas }: GraficoTiempoEst
             {asignaturasConDatos
               .filter((a) => asignaturasSeleccionadas.length === 0 || asignaturasSeleccionadas.includes(a.id))
               .map((asignatura) => {
-                const totalAsig = sesiones
-                  .filter((s) => s.asignaturaId === asignatura.id)
-                  .reduce((sum, s) => sum + s.duracionMinutos, 0)
+                const totalAsig = totalesPorAsignatura.get(asignatura.id) ?? 0
                 return (
                   <span key={asignatura.id} className="flex items-center gap-1.5">
                     <span
@@ -595,7 +672,7 @@ export function GraficoTiempoEstudio({ sesiones, asignaturas }: GraficoTiempoEst
               </thead>
               <tbody>
                 {datosPorAsignatura.map((item) => (
-                  <tr key={item.nombre} className="border-b border-[var(--borde)]/50">
+                  <tr key={item.id} className="border-b border-[var(--borde)]/50">
                     <td className="py-2 flex items-center gap-2">
                       <span
                         className="h-2.5 w-2.5 rounded-full"

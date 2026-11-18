@@ -24,9 +24,14 @@ export function eventosCalendario(
   opciones: { incluirHechas?: boolean } = {},
 ): EventoCalendario[] {
   const { incluirHechas = false } = opciones
+  const coloresAsignaturas = new Map(
+    datos.asignaturas.map((asignatura) => [asignatura.id, asignatura.color]),
+  )
+  const coloresProyectos = new Map(
+    datos.proyectos.map((proyecto) => [proyecto.id, proyecto.color]),
+  )
   const colorAsignatura = (id?: string) =>
-    datos.asignaturas.find((asignatura) => asignatura.id === id)?.color ??
-    'var(--primario)'
+    (id ? coloresAsignaturas.get(id) : undefined) ?? 'var(--primario)'
 
   const examenes: EventoCalendario[] = datos.examenes.map((examen) => ({
     id: `examen-${examen.id}`,
@@ -47,8 +52,7 @@ export function eventosCalendario(
         tarea.vinculo?.tipo === 'asignatura' ? tarea.vinculo.id : undefined
       const color =
         tarea.vinculo?.tipo === 'proyecto'
-          ? (datos.proyectos.find((proyecto) => proyecto.id === tarea.vinculo?.id)
-              ?.color ?? 'var(--primario)')
+          ? (coloresProyectos.get(tarea.vinculo.id) ?? 'var(--primario)')
           : colorAsignatura(asignaturaId)
       return {
         id: `tarea-${tarea.id}`,
@@ -69,13 +73,6 @@ export function eventosCalendario(
       (a.tipo === b.tipo ? 0 : a.tipo === 'examen' ? -1 : 1) ||
       a.titulo.localeCompare(b.titulo, 'es'),
   )
-}
-
-export function eventosDelDia(
-  eventos: EventoCalendario[],
-  fecha: string,
-): EventoCalendario[] {
-  return eventos.filter((evento) => evento.fecha === fecha)
 }
 
 /** Agrupa los eventos por fecha para pintar la rejilla sin recorrer la lista cada vez. */

@@ -50,6 +50,9 @@ export function ModalHabito({
   const [unidad, setUnidad] = useState('')
   const [error, setError] = useState<string | null>(null)
 
+  // Evita reiniciar el formulario cuando el padre crea una nueva lista de colores.
+  const claveColores = coloresAsignados.join('|')
+
   useEffect(() => {
     if (abierto) {
       if (habitoExistente) {
@@ -73,7 +76,9 @@ export function ModalHabito({
       }
       setError(null)
     }
-  }, [abierto, habitoExistente, coloresAsignados])
+    // `claveColores` resume el contenido de `coloresAsignados`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abierto, habitoExistente, claveColores])
 
   const manejarEnvio = (e: React.FormEvent) => {
     e.preventDefault()

@@ -70,7 +70,7 @@ export function ModalExamen({
       asignaturaId,
       fecha,
       temaIds,
-      ...(notas.trim() ? { notas: notas.trim() } : {}),
+      notas: notas.trim() || undefined,
     }
 
     if (examen) actualizarExamen(examen.id, entrada)

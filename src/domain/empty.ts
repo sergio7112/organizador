@@ -11,8 +11,6 @@ export function crearDatosVacios(): Datos {
     tareas: [],
     proyectos: [],
     checklist: [],
-    repasos: [],
-    errores: [],
     habitos: [],
     registrosHabitos: [],
     sesionesEstudio: [],
@@ -20,6 +18,10 @@ export function crearDatosVacios(): Datos {
       tema: 'sistema',
       vistaCalendario: 'mes',
       sincronizacionAutomatica: true,
+      notificacionesResumenDiario: false,
+      horaResumenDiario: '08:00',
+      notificacionesProximosEventos: false,
+      horaAvisosProximosEventos: '09:00',
     },
   }
 }

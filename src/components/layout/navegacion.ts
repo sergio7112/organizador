@@ -1,12 +1,10 @@
 import type { LucideIcon } from 'lucide-react'
 import {
-  AlertTriangle,
   BookOpen,
   CalendarDays,
   FolderKanban,
   GraduationCap,
   ListChecks,
-  RotateCcw,
   Settings,
   Sun,
   Target,
@@ -29,8 +27,6 @@ export const SECCIONES: Seccion[] = [
   { ruta: '/proyectos', nombre: 'Proyectos', icono: FolderKanban, enMovil: true },
   { ruta: '/habitos', nombre: 'Hábitos', icono: Target, enMovil: true },
   { ruta: '/tiempo-estudio', nombre: 'Tiempo de estudio', icono: Clock, enMovil: true },
-  { ruta: '/repaso', nombre: 'Repaso', icono: RotateCcw, enMovil: false },
-  { ruta: '/errores', nombre: 'Errores', icono: AlertTriangle, enMovil: false },
 ]
 
 export const SECCION_AJUSTES: Seccion = {

@@ -18,10 +18,27 @@ export function temasDelExamen(examen: Examen, temas: Tema[]): Tema[] {
 export function progresoExamen(examen: Examen, temas: Tema[]): ProgresoExamen {
   const propios = temasDelExamen(examen, temas)
   const total = propios.length
-  const dominados = propios.filter((t) => t.estado === 'dominado').length
-  const repasados = propios.filter((t) => t.estado === 'repasado').length
-  const estudiando = propios.filter((t) => t.estado === 'estudiando').length
-  const sinEmpezar = propios.filter((t) => t.estado === 'sin_empezar').length
+  let dominados = 0
+  let repasados = 0
+  let estudiando = 0
+  let sinEmpezar = 0
+
+  for (const tema of propios) {
+    switch (tema.estado) {
+      case 'dominado':
+        dominados += 1
+        break
+      case 'repasado':
+        repasados += 1
+        break
+      case 'estudiando':
+        estudiando += 1
+        break
+      case 'sin_empezar':
+        sinEmpezar += 1
+        break
+    }
+  }
 
   const avance = dominados + repasados * 0.66 + estudiando * 0.33
   return {

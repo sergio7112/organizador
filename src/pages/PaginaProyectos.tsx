@@ -25,6 +25,26 @@ export function PaginaProyectos() {
   const totalPasos = datos.checklist.length
   const pasosHechos = datos.checklist.filter((item) => item.hecho).length
 
+  const itemsPorProyecto = useMemo(() => {
+    const mapa = new Map<string, typeof datos.checklist>()
+    for (const item of datos.checklist) {
+      const lista = mapa.get(item.proyectoId)
+      if (lista) lista.push(item)
+      else mapa.set(item.proyectoId, [item])
+    }
+    return mapa
+  }, [datos.checklist])
+
+  const tareasActivasPorProyecto = useMemo(() => {
+    const mapa = new Map<string, number>()
+    for (const tarea of datos.tareas) {
+      if (tarea.estado === 'hecha' || tarea.vinculo?.tipo !== 'proyecto') continue
+      const id = tarea.vinculo.id
+      mapa.set(id, (mapa.get(id) ?? 0) + 1)
+    }
+    return mapa
+  }, [datos.tareas])
+
   return (
     <>
       <CabeceraPagina
@@ -57,18 +77,11 @@ export function PaginaProyectos() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {proyectos.map((proyecto) => {
-            const items = datos.checklist.filter(
-              (item) => item.proyectoId === proyecto.id,
-            )
+            const items = itemsPorProyecto.get(proyecto.id) ?? []
             const hechos = items.filter((item) => item.hecho).length
             const porcentaje =
               items.length === 0 ? 0 : Math.round((hechos / items.length) * 100)
-            const tareas = datos.tareas.filter(
-              (tarea) =>
-                tarea.vinculo?.tipo === 'proyecto' &&
-                tarea.vinculo.id === proyecto.id &&
-                tarea.estado !== 'hecha',
-            ).length
+            const tareas = tareasActivasPorProyecto.get(proyecto.id) ?? 0
 
             return (
               <Link

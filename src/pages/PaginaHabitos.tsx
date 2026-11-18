@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Plus, Target, BarChart2, Calendar, TrendingUp } from 'lucide-react'
 import { CabeceraPagina } from '../components/ui/CabeceraPagina'
 import { Tarjeta } from '../components/ui/Tarjeta'
@@ -18,7 +18,24 @@ export function PaginaHabitos() {
   const [vista, setVista] = useState<'lista' | 'graficos'>('lista')
   const [solicitudNueva, setSolicitudNueva] = useState(0)
 
-  const habitosActivos = datos.habitos.filter((h) => !h.archivado)
+  const habitosActivos = useMemo(
+    () => datos.habitos.filter((h) => !h.archivado),
+    [datos.habitos],
+  )
+
+  const resumenRegistros = useMemo(() => {
+    const mapa = new Map<string, { fechas: Set<string>; total: number }>()
+    for (const registro of datos.registrosHabitos) {
+      let resumen = mapa.get(registro.habitoId)
+      if (!resumen) {
+        resumen = { fechas: new Set(), total: 0 }
+        mapa.set(registro.habitoId, resumen)
+      }
+      resumen.total += 1
+      if (registro.completado) resumen.fechas.add(registro.fecha)
+    }
+    return mapa
+  }, [datos.registrosHabitos])
 
   // Mantiene la selección del gráfico sincronizada con los hábitos existentes.
   useEffect(() => {
@@ -102,26 +119,17 @@ export function PaginaHabitos() {
           {/* Resumen rápido */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {habitosActivos.slice(0, 4).map((habito) => {
-              const registrosHabito = datos.registrosHabitos.filter((r) => r.habitoId === habito.id)
-              const completados = registrosHabito.filter((r) => r.completado).length
-              const total = registrosHabito.length
+              const resumen = resumenRegistros.get(habito.id)
+              const completados = resumen?.fechas.size ?? 0
+              const total = resumen?.total ?? 0
               const porcentaje = total > 0 ? Math.round((completados / total) * 100) : 0
 
-              // Racha actual
+              // Racha actual: días consecutivos completados hasta hoy.
               let racha = 0
-              const ordenados = registrosHabito
-                .filter((r) => r.completado)
-                .map((r) => r.fecha)
-                .sort()
-                .reverse()
               let fechaEsperada = hoyISO()
-              for (const fecha of ordenados) {
-                if (fecha === fechaEsperada) {
-                  racha++
-                  fechaEsperada = sumarDias(fechaEsperada, -1)
-                } else if (fecha < fechaEsperada) {
-                  break
-                }
+              while (resumen?.fechas.has(fechaEsperada)) {
+                racha += 1
+                fechaEsperada = sumarDias(fechaEsperada, -1)
               }
 
               return (

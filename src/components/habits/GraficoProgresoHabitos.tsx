@@ -39,94 +39,105 @@ interface GraficoProgresoHabitosProps {
 
 const COLORES_GRAFICO = PALETA.map((color) => color.valor)
 
-function generarDatosSemana(habitos: Habito[], registros: RegistroHabito[], habitosSeleccionados: string[]) {
+type IndiceRegistros = Map<string, Map<string, boolean>>
+
+/** Índice habitoId → fecha → completado, para no recorrer la lista por cada día. */
+function indexarRegistros(registros: RegistroHabito[]): IndiceRegistros {
+  const indice: IndiceRegistros = new Map()
+
+  for (const registro of registros) {
+    let fechas = indice.get(registro.habitoId)
+    if (!fechas) {
+      fechas = new Map()
+      indice.set(registro.habitoId, fechas)
+    }
+    fechas.set(registro.fecha, registro.completado)
+  }
+
+  return indice
+}
+
+function seEspera(habito: Habito, dia: Date): boolean {
+  switch (habito.frecuencia) {
+    case 'diaria':
+      return true
+    case 'semanal':
+    case 'personalizada':
+      return habito.diasSemana?.includes(dia.getDay()) ?? false
+    case 'mensual':
+      return habito.diaMes === dia.getDate()
+  }
+}
+
+function habitosSeleccionadosDe(
+  habitosPorId: Map<string, Habito>,
+  ids: string[],
+): Habito[] {
+  const seleccionados: Habito[] = []
+  for (const id of ids) {
+    const habito = habitosPorId.get(id)
+    if (habito) seleccionados.push(habito)
+  }
+  return seleccionados
+}
+
+function generarDatosSemana(
+  habitosPorId: Map<string, Habito>,
+  indice: IndiceRegistros,
+  habitosSeleccionados: string[],
+) {
   const hoy = new Date()
   const inicio = startOfWeek(hoy, { weekStartsOn: 1 })
   const fin = endOfWeek(hoy, { weekStartsOn: 1 })
   const dias = eachDayOfInterval({ start: inicio, end: fin })
+  const habitos = habitosSeleccionadosDe(habitosPorId, habitosSeleccionados)
 
   return dias.map((dia) => {
-    const fechaStr = format(dia, 'yyyy-MM-dd')
-    const diaNombre = format(dia, 'EEE', { locale: es })
-    const item: Record<string, string | number> = { fecha: fechaStr, dia: diaNombre }
+    const fecha = format(dia, 'yyyy-MM-dd')
+    const item: Record<string, string | number> = {
+      fecha,
+      dia: format(dia, 'EEE', { locale: es }),
+    }
 
-    habitosSeleccionados.forEach((habitoId, i) => {
-      const habito = habitos.find((h) => h.id === habitoId)
-      if (!habito) return
-
-      let seEspera = false
-      const diaSemana = dia.getDay()
-      switch (habito.frecuencia) {
-        case 'diaria':
-          seEspera = true
-          break
-        case 'semanal':
-          seEspera = habito.diasSemana?.includes(diaSemana) ?? false
-          break
-        case 'mensual':
-          seEspera = habito.diaMes === dia.getDate()
-          break
-        case 'personalizada':
-          seEspera = habito.diasSemana?.includes(diaSemana) ?? false
-          break
-      }
-
-      const registro = registros.find((r) => r.habitoId === habitoId && r.fecha === fechaStr)
-      const completado = registro?.completado ?? false
-
-      item[`h${i}`] = seEspera ? (completado ? 1 : 0) : 0
+    habitos.forEach((habito, i) => {
+      const completado = indice.get(habito.id)?.get(fecha) ?? false
+      item[`h${i}`] = seEspera(habito, dia) && completado ? 1 : 0
     })
 
     return item
   })
 }
 
-function generarDatosMes(habitos: Habito[], registros: RegistroHabito[], habitosSeleccionados: string[]) {
+function generarDatosMes(
+  habitosPorId: Map<string, Habito>,
+  indice: IndiceRegistros,
+  habitosSeleccionados: string[],
+) {
   const hoy = new Date()
   const inicio = startOfMonth(hoy)
   const fin = endOfMonth(hoy)
   const semanas = eachWeekOfInterval({ start: inicio, end: fin }, { weekStartsOn: 1 })
+  const habitos = habitosSeleccionadosDe(habitosPorId, habitosSeleccionados)
 
   return semanas.map((semana) => {
     const inicioSemana = startOfWeek(semana, { weekStartsOn: 1 })
     const finSemana = endOfWeek(semana, { weekStartsOn: 1 })
-    const semanaLabel = `${format(inicioSemana, 'dd/MM', { locale: es })}`
+    const dias = eachDayOfInterval({ start: inicioSemana, end: finSemana }).map(
+      (dia) => ({ dia, fecha: format(dia, 'yyyy-MM-dd') }),
+    )
+    const item: Record<string, string | number> = {
+      semana: format(inicioSemana, 'dd/MM', { locale: es }),
+    }
 
-    const item: Record<string, string | number> = { semana: semanaLabel }
-
-    habitosSeleccionados.forEach((habitoId, i) => {
-      const habito = habitos.find((h) => h.id === habitoId)
-      if (!habito) return
-
+    habitos.forEach((habito, i) => {
+      const fechas = indice.get(habito.id)
       let completados = 0
       let esperados = 0
 
-      const diasSemana = eachDayOfInterval({ start: inicioSemana, end: finSemana })
-      for (const dia of diasSemana) {
-        const fechaStr = format(dia, 'yyyy-MM-dd')
-        const diaSemanaNum = dia.getDay()
-
-        let seEspera = false
-        switch (habito.frecuencia) {
-          case 'diaria':
-            seEspera = true
-            break
-          case 'semanal':
-            seEspera = habito.diasSemana?.includes(diaSemanaNum) ?? false
-            break
-          case 'mensual':
-            seEspera = habito.diaMes === dia.getDate()
-            break
-          case 'personalizada':
-            seEspera = habito.diasSemana?.includes(diaSemanaNum) ?? false
-            break
-        }
-
-        if (seEspera) {
-          esperados++
-          const registro = registros.find((r) => r.habitoId === habitoId && r.fecha === fechaStr)
-          if (registro?.completado) completados++
-        }
+      for (const { dia: fechaDia, fecha } of dias) {
+        if (!seEspera(habito, fechaDia)) continue
+        esperados += 1
+        if (fechas?.get(fecha)) completados += 1
       }
 
       item[`h${i}`] = esperados > 0 ? Math.round((completados / esperados) * 100) : 0
@@ -136,52 +147,36 @@ function generarDatosMes(habitos: Habito[], registros: RegistroHabito[], habitos
   })
 }
 
-function generarDatosAño(habitos: Habito[], registros: RegistroHabito[], habitosSeleccionados: string[]) {
+function generarDatosAño(
+  habitosPorId: Map<string, Habito>,
+  indice: IndiceRegistros,
+  habitosSeleccionados: string[],
+) {
   const hoy = new Date()
   const inicio = new Date(hoy.getFullYear(), 0, 1)
   const fin = new Date(hoy.getFullYear(), 11, 31)
   const meses = eachMonthOfInterval({ start: inicio, end: fin })
+  const habitos = habitosSeleccionadosDe(habitosPorId, habitosSeleccionados)
 
   return meses.map((mes) => {
     const inicioMes = startOfMonth(mes)
     const finMes = endOfMonth(mes)
-    const mesLabel = format(mes, 'MMM', { locale: es })
+    const dias = eachDayOfInterval({ start: inicioMes, end: finMes }).map(
+      (dia) => ({ dia, fecha: format(dia, 'yyyy-MM-dd') }),
+    )
+    const item: Record<string, string | number> = {
+      mes: format(mes, 'MMM', { locale: es }),
+    }
 
-    const item: Record<string, string | number> = { mes: mesLabel }
-
-    habitosSeleccionados.forEach((habitoId, i) => {
-      const habito = habitos.find((h) => h.id === habitoId)
-      if (!habito) return
-
+    habitos.forEach((habito, i) => {
+      const fechas = indice.get(habito.id)
       let completados = 0
       let esperados = 0
 
-      const diasMes = eachDayOfInterval({ start: inicioMes, end: finMes })
-      for (const dia of diasMes) {
-        const fechaStr = format(dia, 'yyyy-MM-dd')
-        const diaSemanaNum = dia.getDay()
-
-        let seEspera = false
-        switch (habito.frecuencia) {
-          case 'diaria':
-            seEspera = true
-            break
-          case 'semanal':
-            seEspera = habito.diasSemana?.includes(diaSemanaNum) ?? false
-            break
-          case 'mensual':
-            seEspera = habito.diaMes === dia.getDate()
-            break
-          case 'personalizada':
-            seEspera = habito.diasSemana?.includes(diaSemanaNum) ?? false
-            break
-        }
-
-        if (seEspera) {
-          esperados++
-          const registro = registros.find((r) => r.habitoId === habitoId && r.fecha === fechaStr)
-          if (registro?.completado) completados++
-        }
+      for (const { dia: fechaDia, fecha } of dias) {
+        if (!seEspera(habito, fechaDia)) continue
+        esperados += 1
+        if (fechas?.get(fecha)) completados += 1
       }
 
       item[`h${i}`] = esperados > 0 ? Math.round((completados / esperados) * 100) : 0
@@ -199,21 +194,40 @@ export function GraficoProgresoHabitos({
 }: GraficoProgresoHabitosProps) {
   const [vista, setVista] = useState<VistaGrafico>('semana')
 
-  const habitosDisponibles = habitos.filter((h) => !h.archivado)
+  const habitosDisponibles = useMemo(
+    () => habitos.filter((h) => !h.archivado),
+    [habitos],
+  )
+
+  const habitosPorId = useMemo(
+    () => new Map(habitos.map((habito) => [habito.id, habito])),
+    [habitos],
+  )
+
+  const indiceRegistros = useMemo(() => indexarRegistros(registros), [registros])
+
   const datos = useMemo(() => {
     switch (vista) {
       case 'semana':
-        return generarDatosSemana(habitos, registros, habitosSeleccionados)
+        return generarDatosSemana(
+          habitosPorId,
+          indiceRegistros,
+          habitosSeleccionados,
+        )
       case 'mes':
-        return generarDatosMes(habitos, registros, habitosSeleccionados)
+        return generarDatosMes(habitosPorId, indiceRegistros, habitosSeleccionados)
       case 'año':
-        return generarDatosAño(habitos, registros, habitosSeleccionados)
+        return generarDatosAño(habitosPorId, indiceRegistros, habitosSeleccionados)
     }
-  }, [vista, habitos, registros, habitosSeleccionados])
+  }, [vista, habitosPorId, indiceRegistros, habitosSeleccionados])
 
   const clavesHabitos = useMemo(() => {
-    return habitosSeleccionados.map((id, i) => ({ id, clave: `h${i}`, habito: habitos.find((h) => h.id === id) }))
-  }, [habitosSeleccionados, habitos])
+    return habitosSeleccionados.map((id, i) => ({
+      id,
+      clave: `h${i}`,
+      habito: habitosPorId.get(id),
+    }))
+  }, [habitosSeleccionados, habitosPorId])
 
   if (habitosDisponibles.length === 0) {
     return (

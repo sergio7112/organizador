@@ -4,7 +4,6 @@ import type {
   Asignatura,
   Ajustes,
   Datos,
-  ErrorTema,
   EstadoTema,
   Examen,
   Habito,
@@ -19,8 +18,6 @@ import { migrarColoresCalidos } from '../domain/colors'
 import { crearDatosVacios } from '../domain/empty'
 import { normalizarDatos } from '../domain/normalize'
 import { nuevoId } from '../domain/ids'
-import { hoyISO } from '../domain/dates'
-import { crearRepasos, estadoTrasCompletarRepaso } from '../domain/spacedRepetition'
 
 export type EntradaTarea = Omit<Tarea, 'id' | 'creadaEn' | 'completadaEn'>
 export type EntradaExamen = Omit<Examen, 'id' | 'creadoEn'>
@@ -68,15 +65,6 @@ export interface Acciones {
     cambios: Partial<Pick<ItemChecklist, 'texto' | 'hecho' | 'orden'>>,
   ) => void
   eliminarItemChecklist: (id: string) => void
-
-  completarRepaso: (id: string) => void
-
-  crearError: (datos: { temaId: string; queFallo: string; porQue: string }) => void
-  actualizarError: (
-    id: string,
-    cambios: Partial<Pick<ErrorTema, 'queFallo' | 'porQue' | 'resuelto'>>,
-  ) => void
-  eliminarError: (id: string) => void
 
   // Hábitos
   crearHabito: (datos: EntradaHabito) => string
@@ -151,34 +139,21 @@ export const useAppStore = create<Tienda>()(
           })),
 
         eliminarAsignatura: (id) =>
-          editar((datos) => {
-            const temasEliminados = new Set(
-              datos.temas
-                .filter((tema) => tema.asignaturaId === id)
-                .map((tema) => tema.id),
-            )
-            return {
-              ...datos,
-              asignaturas: datos.asignaturas.filter(
-                (asignatura) => asignatura.id !== id,
-              ),
-              temas: datos.temas.filter((tema) => !temasEliminados.has(tema.id)),
-              examenes: datos.examenes.filter(
-                (examen) => examen.asignaturaId !== id,
-              ),
-              tareas: datos.tareas.map((tarea) =>
-                tarea.vinculo?.tipo === 'asignatura' && tarea.vinculo.id === id
-                  ? { ...tarea, vinculo: undefined }
-                  : tarea,
-              ),
-              repasos: datos.repasos.filter(
-                (repaso) => !temasEliminados.has(repaso.temaId),
-              ),
-              errores: datos.errores.filter(
-                (error) => !temasEliminados.has(error.temaId),
-              ),
-            }
-          }),
+          editar((datos) => ({
+            ...datos,
+            asignaturas: datos.asignaturas.filter(
+              (asignatura) => asignatura.id !== id,
+            ),
+            temas: datos.temas.filter((tema) => tema.asignaturaId !== id),
+            examenes: datos.examenes.filter(
+              (examen) => examen.asignaturaId !== id,
+            ),
+            tareas: datos.tareas.map((tarea) =>
+              tarea.vinculo?.tipo === 'asignatura' && tarea.vinculo.id === id
+                ? { ...tarea, vinculo: undefined }
+                : tarea,
+            ),
+          })),
 
         crearTema: ({ asignaturaId, titulo }) => {
           const id = nuevoId()
@@ -201,43 +176,14 @@ export const useAppStore = create<Tienda>()(
         },
 
         actualizarTema: (id, cambios) =>
-          editar((datos) => {
-            const anterior = datos.temas.find((tema) => tema.id === id)
-            if (!anterior) return datos
-
-            const tema: Tema = {
-              ...anterior,
-              ...cambios,
-              actualizadoEn: AHORA(),
-            }
-            let repasos = datos.repasos
-
-            if (cambios.estado && cambios.estado !== anterior.estado) {
-              const pendientes = repasos.filter(
-                (repaso) => repaso.temaId === id && !repaso.completadoEn,
-              )
-
-              if (cambios.estado === 'sin_empezar') {
-                repasos = repasos.filter(
-                  (repaso) => !(repaso.temaId === id && !repaso.completadoEn),
-                )
-              } else if (cambios.estado === 'estudiando' && pendientes.length === 0) {
-                repasos = [...repasos, ...crearRepasos(id)]
-              } else if (cambios.estado === 'dominado') {
-                repasos = repasos.map((repaso) =>
-                  repaso.temaId === id && !repaso.completadoEn
-                    ? { ...repaso, completadoEn: AHORA() }
-                    : repaso,
-                )
-              }
-            }
-
-            return {
-              ...datos,
-              temas: datos.temas.map((actual) => (actual.id === id ? tema : actual)),
-              repasos,
-            }
-          }),
+          editar((datos) => ({
+            ...datos,
+            temas: datos.temas.map((tema) =>
+              tema.id === id
+                ? { ...tema, ...cambios, actualizadoEn: AHORA() }
+                : tema,
+            ),
+          })),
 
         eliminarTema: (id) =>
           editar((datos) => ({
@@ -247,8 +193,6 @@ export const useAppStore = create<Tienda>()(
               ...examen,
               temaIds: examen.temaIds.filter((temaId) => temaId !== id),
             })),
-            repasos: datos.repasos.filter((repaso) => repaso.temaId !== id),
-            errores: datos.errores.filter((error) => error.temaId !== id),
           })),
 
         crearTarea: (entrada) => {
@@ -398,70 +342,6 @@ export const useAppStore = create<Tienda>()(
             checklist: datos.checklist.filter((item) => item.id !== id),
           })),
 
-        completarRepaso: (id) =>
-          editar((datos) => {
-            const repaso = datos.repasos.find((actual) => actual.id === id)
-            if (!repaso) return datos
-
-            const completadoEn = AHORA()
-            const repasos = datos.repasos.map((actual) => {
-              if (actual.id === id) return { ...actual, completadoEn }
-              if (
-                repaso.intervaloDias === 7 &&
-                actual.temaId === repaso.temaId &&
-                !actual.completadoEn
-              ) {
-                return { ...actual, completadoEn }
-              }
-              return actual
-            })
-            const tema = datos.temas.find((actual) => actual.id === repaso.temaId)
-            if (!tema) return { ...datos, repasos }
-
-            const estado = estadoTrasCompletarRepaso(repaso, tema)
-            if (estado === tema.estado) return { ...datos, repasos }
-
-            return {
-              ...datos,
-              repasos,
-              temas: datos.temas.map((actual) =>
-                actual.id === tema.id
-                  ? { ...actual, estado, actualizadoEn: completadoEn }
-                  : actual,
-              ),
-            }
-          }),
-
-        crearError: ({ temaId, queFallo, porQue }) =>
-          editar((datos) => ({
-            ...datos,
-            errores: [
-              ...datos.errores,
-              {
-                id: nuevoId(),
-                temaId,
-                queFallo: queFallo.trim(),
-                porQue: porQue.trim(),
-                fecha: hoyISO(),
-                resuelto: false,
-              },
-            ],
-          })),
-
-        actualizarError: (id, cambios) =>
-          editar((datos) => ({
-            ...datos,
-            errores: datos.errores.map((error) =>
-              error.id === id ? { ...error, ...cambios } : error,
-            ),
-          })),
-
-        eliminarError: (id) =>
-          editar((datos) => ({
-            ...datos,
-            errores: datos.errores.filter((error) => error.id !== id),
-          })),
-
         // Hábitos
         crearHabito: (entrada) => {
           const id = nuevoId()
@@ -512,13 +392,16 @@ export const useAppStore = create<Tienda>()(
           })),
 
         reordenarHabitos: (ids) =>
-          editar((datos) => ({
-            ...datos,
-            habitos: ids.map((id, index) => {
-              const habito = datos.habitos.find((h) => h.id === id)
-              return habito ? { ...habito, orden: index } : null
-            }).filter((h): h is Habito => h !== null),
-          })),
+          editar((datos) => {
+            const posiciones = new Map(ids.map((id, indice) => [id, indice]))
+            return {
+              ...datos,
+              habitos: datos.habitos.map((habito) => {
+                const posicion = posiciones.get(habito.id)
+                return posicion === undefined ? habito : { ...habito, orden: posicion }
+              }),
+            }
+          }),
 
         // Registros de hábitos
         crearRegistroHabito: (entrada) => {

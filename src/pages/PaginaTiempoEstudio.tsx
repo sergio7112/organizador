@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Plus, Clock, BarChart2, List } from 'lucide-react'
 import { CabeceraPagina } from '../components/ui/CabeceraPagina'
 import { Tarjeta } from '../components/ui/Tarjeta'
@@ -13,8 +13,19 @@ export function PaginaTiempoEstudio() {
   const [vista, setVista] = useState<'lista' | 'graficos'>('lista')
   const [solicitudNueva, setSolicitudNueva] = useState(0)
 
-  const asignaturasConSesiones = datos.asignaturas.filter((a) =>
-    datos.sesionesEstudio.some((s) => s.asignaturaId === a.id),
+  const sesionesPorAsignatura = useMemo(() => {
+    const mapa = new Map<string, typeof datos.sesionesEstudio>()
+    for (const sesion of datos.sesionesEstudio) {
+      const lista = mapa.get(sesion.asignaturaId)
+      if (lista) lista.push(sesion)
+      else mapa.set(sesion.asignaturaId, [sesion])
+    }
+    return mapa
+  }, [datos.sesionesEstudio])
+
+  const asignaturasConSesiones = useMemo(
+    () => datos.asignaturas.filter((a) => sesionesPorAsignatura.has(a.id)),
+    [datos.asignaturas, sesionesPorAsignatura],
   )
 
   const abrirNuevaSesion = () => {
@@ -87,7 +98,7 @@ export function PaginaTiempoEstudio() {
           <h2 className="mb-3 text-lg font-semibold">Resumen por asignatura</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {asignaturasConSesiones.map((asignatura) => {
-              const sesionesAsig = datos.sesionesEstudio.filter((s) => s.asignaturaId === asignatura.id)
+              const sesionesAsig = sesionesPorAsignatura.get(asignatura.id) ?? []
               const totalMinutos = sesionesAsig.reduce((sum, s) => sum + s.duracionMinutos, 0)
               const numSesiones = sesionesAsig.length
               const promedio = numSesiones > 0 ? Math.round(totalMinutos / numSesiones) : 0

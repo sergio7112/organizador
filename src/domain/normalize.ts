@@ -17,6 +17,11 @@ export function normalizarDatos(guardado?: Partial<Datos> | null): Datos {
       ? guardado.ajustes.sincronizacionAutomatica
       : true
 
+  const horaValida = (valor: unknown, predeterminada: string) =>
+    typeof valor === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(valor)
+      ? valor
+      : predeterminada
+
   const ajustes: Ajustes = {
     tema: tema && TEMAS.includes(tema) ? tema : 'sistema',
     vistaCalendario:
@@ -24,6 +29,15 @@ export function normalizarDatos(guardado?: Partial<Datos> | null): Datos {
         ? vistaCalendario
         : 'mes',
     sincronizacionAutomatica,
+    notificacionesResumenDiario:
+      guardado?.ajustes?.notificacionesResumenDiario === true,
+    horaResumenDiario: horaValida(guardado?.ajustes?.horaResumenDiario, '08:00'),
+    notificacionesProximosEventos:
+      guardado?.ajustes?.notificacionesProximosEventos === true,
+    horaAvisosProximosEventos: horaValida(
+      guardado?.ajustes?.horaAvisosProximosEventos,
+      '09:00',
+    ),
   }
 
   return {
@@ -34,8 +48,6 @@ export function normalizarDatos(guardado?: Partial<Datos> | null): Datos {
     tareas: guardado?.tareas ?? [],
     proyectos: guardado?.proyectos ?? [],
     checklist: guardado?.checklist ?? [],
-    repasos: guardado?.repasos ?? [],
-    errores: guardado?.errores ?? [],
     habitos: guardado?.habitos ?? [],
     registrosHabitos: guardado?.registrosHabitos ?? [],
     sesionesEstudio: guardado?.sesionesEstudio ?? [],

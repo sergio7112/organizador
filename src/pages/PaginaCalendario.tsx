@@ -14,8 +14,7 @@ import {
   sumarMeses,
   sumarSemanas,
 } from '../domain/dates'
-import { agruparPorFecha, eventosCalendario, eventosDelDia } from '../domain/calendar'
-import type { EventoCalendario } from '../domain/calendar'
+import { agruparPorFecha, eventosCalendario } from '../domain/calendar'
 import { useAppStore } from '../store/useAppStore'
 import { cn, capitalizar } from '../lib/format'
 import { CabeceraPagina } from '../components/ui/CabeceraPagina'
@@ -54,7 +53,13 @@ export function PaginaCalendario() {
   const porFecha = useMemo(() => agruparPorFecha(eventos), [eventos])
   const dias = vista === 'mes' ? diasDeMes(referencia) : diasDeSemana(referencia)
 
-  const eventosSeleccionados = eventosDelDia(eventos, seleccionada)
+  const eventosSeleccionados = porFecha.get(seleccionada) ?? []
+  const fechaHoy = useMemo(() => aFecha(hoy), [hoy])
+
+  const nombresAsignatura = useMemo(
+    () => new Map(datos.asignaturas.map((a) => [a.id, a.nombre])),
+    [datos.asignaturas],
+  )
 
   const mover = (direccion: -1 | 1) => {
     setReferencia((actual) =>
@@ -66,9 +71,6 @@ export function PaginaCalendario() {
     setReferencia(aFecha(hoy))
     setSeleccionada(hoy)
   }
-
-  const nombreAsignatura = (evento: EventoCalendario) =>
-    datos.asignaturas.find((asignatura) => asignatura.id === evento.asignaturaId)?.nombre
 
   const etiquetaRango = () => {
     if (vista === 'mes') return mesYAnio(referencia)
@@ -157,7 +159,7 @@ export function PaginaCalendario() {
               const iso = isoDeFecha(dia)
               const eventosDia = porFecha.get(iso) ?? []
               const fueraDelMes = !isSameMonth(dia, referencia)
-              const esHoyDia = isSameDay(dia, aFecha(hoy))
+              const esHoyDia = isSameDay(dia, fechaHoy)
               const activo = iso === seleccionada
 
               return (
@@ -226,7 +228,7 @@ export function PaginaCalendario() {
           {dias.map((dia) => {
             const iso = isoDeFecha(dia)
             const eventosDia = porFecha.get(iso) ?? []
-            const esHoyDia = isSameDay(dia, aFecha(hoy))
+            const esHoyDia = isSameDay(dia, fechaHoy)
 
             return (
               <Tarjeta key={iso} className="p-3">
@@ -249,7 +251,7 @@ export function PaginaCalendario() {
                       <FilaEvento
                         key={evento.id}
                         evento={evento}
-                        nombreAsignatura={nombreAsignatura(evento)}
+                        nombreAsignatura={nombresAsignatura.get(evento.asignaturaId ?? '')}
                       />
                     ))}
                   </div>
@@ -277,7 +279,7 @@ export function PaginaCalendario() {
                 <FilaEvento
                   key={evento.id}
                   evento={evento}
-                  nombreAsignatura={nombreAsignatura(evento)}
+                  nombreAsignatura={nombresAsignatura.get(evento.asignaturaId ?? '')}
                 />
               ))}
             </div>

@@ -66,7 +66,7 @@ export function ModalTema({
       abierto={abierto}
       onCerrar={onCerrar}
       titulo={tema ? 'Editar tema' : 'Nuevo tema'}
-      descripcion="La nota es opcional. Al pasar a «Estudiando» se programan repasos."
+      descripcion="La nota es opcional."
       ancho="sm"
       pie={
         <>

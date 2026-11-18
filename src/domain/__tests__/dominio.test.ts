@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import type { Asignatura, Datos, Examen, Repaso, Tarea, Tema } from '../types'
+import type { Asignatura, Datos, Examen, Tarea, Tema } from '../types'
 import { progresoExamen, examenesFuturos, proximoExamen } from '../exams'
-import { agruparPorFecha, eventosCalendario, eventosDelDia } from '../calendar'
+import { agruparPorFecha, eventosCalendario } from '../calendar'
 import { sugerenciaDeEstudio, tareasDeHoy, temasEnEstudio } from '../today'
 import { agruparTareas } from '../tasks'
-import { crearRepasos, repasosPendientes, estadoTrasCompletarRepaso } from '../spacedRepetition'
 import { formatearFechaCorta, isoDeFecha, sumarDias } from '../dates'
 
 const HOY = '2026-11-13'
@@ -56,19 +55,25 @@ function examen(
 
 function datos(parcial: Partial<Datos>): Datos {
   return {
-    version: 1,
+    version: 2,
     asignaturas: [],
     temas: [],
     examenes: [],
     tareas: [],
     proyectos: [],
     checklist: [],
-    repasos: [],
-    errores: [],
     habitos: [],
     registrosHabitos: [],
     sesionesEstudio: [],
-    ajustes: { tema: 'sistema', vistaCalendario: 'mes', sincronizacionAutomatica: true },
+    ajustes: {
+      tema: 'sistema',
+      vistaCalendario: 'mes',
+      sincronizacionAutomatica: true,
+      notificacionesResumenDiario: false,
+      horaResumenDiario: '08:00',
+      notificacionesProximosEventos: false,
+      horaAvisosProximosEventos: '09:00',
+    },
     ...parcial,
   }
 }
@@ -158,8 +163,8 @@ describe('eventosCalendario', () => {
     const mapa = agruparPorFecha(eventos)
 
     expect([...mapa.keys()]).toEqual(['2026-11-20', '2026-11-21'])
-    expect(eventosDelDia(eventos, '2026-11-20')).toHaveLength(1)
-    expect(eventosDelDia(eventos, '2026-11-22')).toHaveLength(0)
+    expect(mapa.get('2026-11-20')).toHaveLength(1)
+    expect(mapa.get('2026-11-22')).toBeUndefined()
   })
 })
 
@@ -226,93 +231,8 @@ describe('sugerenciaDeEstudio', () => {
     expect(sugerencia?.porcentajeDominado).toBe(33)
   })
 
-  it('prioriza un tema con repaso pendiente', () => {
-    const temas = [
-      tema('repasado', 'mat', 'repasado', 0),
-      tema('sin-empezar', 'mat', 'sin_empezar', 1),
-    ]
-    const repasos: Repaso[] = [
-      {
-        id: 'r1',
-        temaId: 'repasado',
-        fecha: HOY,
-        intervaloDias: 1,
-        programadoEn: HOY,
-      },
-    ]
-    const base = datos({
-      asignaturas: [asignatura('mat', 'Matemáticas II')],
-      temas,
-      repasos,
-      examenes: [examen('e1', '2026-11-18', 'mat', ['repasado', 'sin-empezar'])],
-    })
-
-    const sugerencia = sugerenciaDeEstudio(base, HOY)
-    expect(sugerencia?.tema.id).toBe('repasado')
-    expect(sugerencia?.repasoPendiente).toBe(true)
-  })
-
   it('devuelve null si no hay exámenes futuros', () => {
     expect(sugerenciaDeEstudio(datos({}), HOY)).toBeNull()
-  })
-})
-
-describe('repaso espaciado', () => {
-  it('programa repasos a 1, 3 y 7 días', () => {
-    const repasos = crearRepasos('tema-1', HOY)
-    expect(repasos.map((r) => r.fecha)).toEqual([
-      '2026-11-14',
-      '2026-11-16',
-      '2026-11-20',
-    ])
-    expect(repasos.map((r) => r.intervaloDias)).toEqual([1, 3, 7])
-  })
-
-  it('devuelve solo los repasos vencidos o de hoy', () => {
-    const repasos = crearRepasos('tema-1', HOY)
-    const pendientes = repasosPendientes(repasos, '2026-11-16')
-    expect(pendientes.map((r) => r.intervaloDias)).toEqual([1, 3])
-  })
-
-  it('no incluye repasos completados', () => {
-    const repasos = crearRepasos('tema-1', HOY).map((repaso) => ({
-      ...repaso,
-      completadoEn: HOY,
-    }))
-    expect(repasosPendientes(repasos, '2026-11-30')).toHaveLength(0)
-  })
-})
-
-describe('estadoTrasCompletarRepaso', () => {
-  it('pasa a repasado con los repasos de 1 y 3 días y a dominado con el de 7', () => {
-    const estudiando = tema('t', 'mat', 'estudiando')
-    const base: Repaso = {
-      id: 'r',
-      temaId: 't',
-      fecha: HOY,
-      intervaloDias: 1,
-      programadoEn: HOY,
-    }
-
-    expect(estadoTrasCompletarRepaso(base, estudiando)).toBe('repasado')
-    expect(
-      estadoTrasCompletarRepaso({ ...base, intervaloDias: 3 }, estudiando),
-    ).toBe('repasado')
-    expect(
-      estadoTrasCompletarRepaso({ ...base, intervaloDias: 7 }, estudiando),
-    ).toBe('dominado')
-  })
-
-  it('no retrocede el estado de un tema ya avanzado', () => {
-    const dominado = tema('t', 'mat', 'dominado')
-    const repaso: Repaso = {
-      id: 'r',
-      temaId: 't',
-      fecha: HOY,
-      intervaloDias: 1,
-      programadoEn: HOY,
-    }
-    expect(estadoTrasCompletarRepaso(repaso, dominado)).toBe('dominado')
   })
 })
 

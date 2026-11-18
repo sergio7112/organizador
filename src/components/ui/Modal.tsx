@@ -32,11 +32,16 @@ export function Modal({
 }: ModalProps) {
   const idTitulo = useId()
   const panel = useRef<HTMLDivElement>(null)
+  const cerrarRef = useRef(onCerrar)
+
+  useEffect(() => {
+    cerrarRef.current = onCerrar
+  }, [onCerrar])
 
   useEffect(() => {
     if (!abierto) return
     const alPulsar = (evento: KeyboardEvent) => {
-      if (evento.key === 'Escape') onCerrar()
+      if (evento.key === 'Escape') cerrarRef.current()
     }
     document.addEventListener('keydown', alPulsar)
     const overflowAnterior = document.body.style.overflow
@@ -48,7 +53,7 @@ export function Modal({
       document.body.style.overflow = overflowAnterior
       focoAnterior?.focus()
     }
-  }, [abierto, onCerrar])
+  }, [abierto])
 
   if (!abierto) return null
 

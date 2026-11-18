@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { AlertCircle, BookOpen, CheckCircle2, Pencil, Plus, Trash2 } from 'lucide-react'
+import { BookOpen, CheckCircle2, Pencil, Plus, Trash2 } from 'lucide-react'
 import type { EstadoTema } from '../domain/types'
 import { ESTADOS_TEMA, ETIQUETAS_ESTADO_TEMA } from '../domain/types'
 import { useAppStore } from '../store/useAppStore'
@@ -16,7 +16,6 @@ import { Entrada, Selector } from '../components/ui/Campos'
 import { DialogoConfirmacion } from '../components/ui/DialogoConfirmacion'
 import { ModalAsignatura } from '../components/subjects/ModalAsignatura'
 import { ModalTema } from '../components/subjects/ModalTema'
-import { ModalError } from '../components/errors/ModalError'
 
 export function PaginaAsignaturaDetalle() {
   const { id } = useParams()
@@ -31,7 +30,6 @@ export function PaginaAsignaturaDetalle() {
   const [temaEditando, setTemaEditando] = useState<string | null>(null)
   const [confirmarAsignatura, setConfirmarAsignatura] = useState(false)
   const [temaAEliminar, setTemaAEliminar] = useState<string | null>(null)
-  const [errorTema, setErrorTema] = useState<string | null>(null)
   const [nuevoTema, setNuevoTema] = useState('')
 
   const asignatura = datos.asignaturas.find((item) => item.id === id)
@@ -43,16 +41,6 @@ export function PaginaAsignaturaDetalle() {
         .sort((a, b) => a.orden - b.orden),
     [datos.temas, id],
   )
-
-  const erroresAbiertos = useMemo(() => {
-    const cuenta = new Map<string, number>()
-    for (const error of datos.errores) {
-      if (!error.resuelto) {
-        cuenta.set(error.temaId, (cuenta.get(error.temaId) ?? 0) + 1)
-      }
-    }
-    return cuenta
-  }, [datos.errores])
 
   if (!asignatura) {
     return (
@@ -174,7 +162,6 @@ export function PaginaAsignaturaDetalle() {
         <Tarjeta className="overflow-hidden">
           <ul className="divide-y divide-[var(--borde)]">
             {temas.map((tema) => {
-              const errores = erroresAbiertos.get(tema.id) ?? 0
               return (
                 <li
                   key={tema.id}
@@ -193,12 +180,6 @@ export function PaginaAsignaturaDetalle() {
                       {tema.nota !== undefined && (
                         <span className="text-xs text-[var(--texto-suave)]">
                           Nota {formatearNota(tema.nota)}
-                        </span>
-                      )}
-                      {errores > 0 && (
-                        <span className="inline-flex items-center gap-1 text-xs text-[var(--aviso)]">
-                          <AlertCircle size={12} />
-                          {errores} {errores === 1 ? 'error abierto' : 'errores abiertos'}
                         </span>
                       )}
                       {tema.estado === 'dominado' && (
@@ -227,15 +208,6 @@ export function PaginaAsignaturaDetalle() {
                     <Boton
                       variante="fantasma"
                       tamano="icono"
-                      onClick={() => setErrorTema(tema.id)}
-                      aria-label={`Anotar un error de ${tema.titulo}`}
-                      className="size-9 text-[var(--aviso)]"
-                    >
-                      <AlertCircle size={16} />
-                    </Boton>
-                    <Boton
-                      variante="fantasma"
-                      tamano="icono"
                       onClick={() => setTemaEditando(tema.id)}
                       aria-label={`Editar ${tema.titulo}`}
                       className="size-9"
@@ -259,12 +231,6 @@ export function PaginaAsignaturaDetalle() {
         </Tarjeta>
       )}
 
-      {temas.length > 0 && (
-        <p className="mt-3 text-xs text-[var(--texto-suave)]">
-          Al cambiar un tema a «Estudiando» se programan repasos a 1, 3 y 7 días.
-        </p>
-      )}
-
       <ModalAsignatura
         abierto={modalEditar}
         asignatura={asignatura}
@@ -276,12 +242,6 @@ export function PaginaAsignaturaDetalle() {
         asignaturaId={asignatura.id}
         tema={temaEditado}
         onCerrar={() => setTemaEditando(null)}
-      />
-
-      <ModalError
-        abierto={errorTema !== null}
-        temaInicial={errorTema ?? undefined}
-        onCerrar={() => setErrorTema(null)}
       />
 
       <DialogoConfirmacion
@@ -298,7 +258,7 @@ export function PaginaAsignaturaDetalle() {
       <DialogoConfirmacion
         abierto={temaAEliminar !== null}
         titulo="Eliminar tema"
-        mensaje="Se eliminará el tema junto con sus repasos y errores registrados."
+        mensaje="Se eliminará el tema de forma permanente."
         onCerrar={() => setTemaAEliminar(null)}
         onConfirmar={() => {
           if (temaAEliminar) eliminarTema(temaAEliminar)

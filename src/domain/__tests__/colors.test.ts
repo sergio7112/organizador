@@ -35,11 +35,27 @@ describe('migración de colores antiguos', () => {
           creadoEn: '2026-11-14T10:00:00.000Z',
         },
       ],
-      ajustes: { tema: 'claro', vistaCalendario: 'mes', sincronizacionAutomatica: true },
+      ajustes: {
+        tema: 'claro',
+        vistaCalendario: 'mes',
+        sincronizacionAutomatica: true,
+        notificacionesResumenDiario: false,
+        horaResumenDiario: '08:00',
+        notificacionesProximosEventos: false,
+        horaAvisosProximosEventos: '09:00',
+      },
     })
 
     expect(datos.asignaturas?.[0].color).toBe('#86198f')
     expect(datos.proyectos?.[0].color).toBe('#c2410c')
-    expect(datos.ajustes).toEqual({ tema: 'claro', vistaCalendario: 'mes', sincronizacionAutomatica: true })
+    expect(datos.ajustes).toEqual({
+      tema: 'claro',
+      vistaCalendario: 'mes',
+      sincronizacionAutomatica: true,
+      notificacionesResumenDiario: false,
+      horaResumenDiario: '08:00',
+      notificacionesProximosEventos: false,
+      horaAvisosProximosEventos: '09:00',
+    })
   })
 })

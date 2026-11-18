@@ -9,7 +9,7 @@ import {
 } from '../../lib/sync'
 
 const DATOS: Datos = {
-  version: 1,
+  version: 2,
   asignaturas: [
     {
       id: 'asig-1',
@@ -68,32 +68,48 @@ const DATOS: Datos = {
       orden: 0,
     },
   ],
-  repasos: [
+  habitos: [
     {
-      id: 'repaso-1',
-      temaId: 'tema-1',
-      fecha: '2026-11-15',
-      intervaloDias: 1,
-      programadoEn: '2026-11-14T10:00:00.000Z',
+      id: 'habito-1',
+      nombre: 'Leer',
+      color: '#2f7a52',
+      frecuencia: 'diaria',
+      objetivo: 20,
+      unidad: 'páginas',
+      archivado: false,
+      creadoEn: '2026-11-14T10:00:00.000Z',
+      orden: 0,
     },
   ],
-  errores: [
+  registrosHabitos: [
     {
-      id: 'error-1',
-      temaId: 'tema-1',
-      queFallo: 'Me equivoqué en el signo',
-      porQue: 'No comprobé el sentido del desplazamiento',
+      id: 'registro-1',
+      habitoId: 'habito-1',
       fecha: '2026-11-14',
-      resuelto: false,
+      completado: true,
+      valor: 12,
+      creadoEn: '2026-11-14T10:00:00.000Z',
     },
   ],
-  habitos: [],
-  registrosHabitos: [],
-  sesionesEstudio: [],
+  sesionesEstudio: [
+    {
+      id: 'sesion-1',
+      asignaturaId: 'asig-1',
+      fecha: '2026-11-14',
+      inicio: '09:00',
+      fin: '10:30',
+      duracionMinutos: 90,
+      creadoEn: '2026-11-14T10:00:00.000Z',
+    },
+  ],
   ajustes: {
     tema: 'oscuro',
     vistaCalendario: 'semana',
     sincronizacionAutomatica: true,
+    notificacionesResumenDiario: false,
+    horaResumenDiario: '08:00',
+    notificacionesProximosEventos: false,
+    horaAvisosProximosEventos: '09:00',
   },
 }
 
@@ -107,7 +123,7 @@ describe('sincronización por JSON', () => {
     }
 
     expect(archivo.formato).toBe('organizador-datos')
-    expect(archivo.version).toBe(1)
+    expect(archivo.version).toBe(2)
     expect(importarDatos(texto)).toEqual(DATOS)
   })
 
@@ -177,6 +193,10 @@ describe('sincronización por JSON', () => {
       tema: 'sistema',
       vistaCalendario: 'mes',
       sincronizacionAutomatica: true,
+      notificacionesResumenDiario: false,
+      horaResumenDiario: '08:00',
+      notificacionesProximosEventos: false,
+      horaAvisosProximosEventos: '09:00',
     })
   })
 })

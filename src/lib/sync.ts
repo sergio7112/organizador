@@ -2,11 +2,12 @@ import type {
   Asignatura,
   Ajustes,
   Datos,
-  ErrorTema,
   Examen,
+  Habito,
   ItemChecklist,
   Proyecto,
-  Repaso,
+  RegistroHabito,
+  SesionEstudio,
   Tarea,
   Tema,
   VinculoTarea,
@@ -14,6 +15,7 @@ import type {
 import {
   ESTADOS_TAREA,
   ESTADOS_TEMA,
+  FRECUENCIAS_HABITO,
   PRIORIDADES,
   VERSION_DATOS,
 } from '../domain/types'
@@ -64,6 +66,16 @@ function lista(contenido: Registro, campo: string): unknown[] {
   return valor
 }
 
+/** Igual que `lista`, pero una copia antigua puede no incluir el campo. */
+function listaOpcional(contenido: Registro, campo: string): unknown[] {
+  const valor = contenido[campo]
+  if (valor === undefined || valor === null) return []
+  if (!Array.isArray(valor)) {
+    throw new ErrorImportacion(`El campo «${campo}» debe ser una lista.`)
+  }
+  return valor
+}
+
 function texto(valor: unknown, ruta: string): string {
   if (typeof valor !== 'string' || valor.trim() === '') {
     throw new ErrorImportacion(`${ruta} debe ser un texto no vacío.`)
@@ -101,6 +113,13 @@ function booleano(valor: unknown, ruta: string): boolean {
 function fecha(valor: unknown, ruta: string): string {
   if (typeof valor !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
     throw new ErrorImportacion(`${ruta} debe tener el formato AAAA-MM-DD.`)
+  }
+  return valor
+}
+
+function hora(valor: unknown, ruta: string): string {
+  if (typeof valor !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(valor)) {
+    throw new ErrorImportacion(`${ruta} debe tener el formato HH:mm.`)
   }
   return valor
 }
@@ -322,62 +341,102 @@ export function importarDatos(contenido: string): Datos {
     }
   })
 
-  const idsRepasos = new Set<string>()
-  const repasos: Repaso[] = lista(datosBrutos, 'repasos').map(
+  const idsHabitos = new Set<string>()
+  const habitos: Habito[] = listaOpcional(datosBrutos, 'habitos').map(
     (item, indice) => {
-      const ruta = `repasos[${indice}]`
+      const ruta = `habitos[${indice}]`
       const fila = registro(item, ruta)
-      const temaId = texto(fila.temaId, `${ruta}.temaId`)
-      if (!idsTemas.has(temaId)) {
+      if (!esUnoDe(fila.frecuencia, FRECUENCIAS_HABITO)) {
         throw new ErrorImportacion(
-          `El repaso ${indice + 1} apunta a un tema que no existe.`,
+          `La frecuencia del hábito ${indice + 1} no es válida.`,
         )
       }
-      const intervalo = fila.intervaloDias
-      if (intervalo !== 1 && intervalo !== 3 && intervalo !== 7) {
-        throw new ErrorImportacion(
-          `El intervalo del repaso ${indice + 1} debe ser 1, 3 o 7 días.`,
-        )
-      }
-      const completadoEn = textoOpcional(
-        fila.completadoEn,
-        `${ruta}.completadoEn`,
-      )
+      const descripcion = textoOpcional(fila.descripcion, `${ruta}.descripcion`)
+      const diasSemana = Array.isArray(fila.diasSemana)
+        ? fila.diasSemana.map((dia, posicion) => {
+            const valor = numero(dia, `${ruta}.diasSemana[${posicion}]`)
+            if (!Number.isInteger(valor) || valor < 0 || valor > 6) {
+              throw new ErrorImportacion(
+                `${ruta}.diasSemana[${posicion}] debe ser un día de 0 a 6.`,
+              )
+            }
+            return valor
+          })
+        : undefined
+      const diaMes = numeroOpcional(fila.diaMes, `${ruta}.diaMes`)
+      const objetivo = numeroOpcional(fila.objetivo, `${ruta}.objetivo`)
+      const unidad = textoOpcional(fila.unidad, `${ruta}.unidad`)
       return {
-        id: idUnico(fila.id, `${ruta}.id`, idsRepasos),
-        temaId,
-        fecha: fecha(fila.fecha, `${ruta}.fecha`),
-        intervaloDias: intervalo,
-        programadoEn: texto(fila.programadoEn, `${ruta}.programadoEn`),
-        ...(completadoEn !== undefined ? { completadoEn } : {}),
+        id: idUnico(fila.id, `${ruta}.id`, idsHabitos),
+        nombre: texto(fila.nombre, `${ruta}.nombre`),
+        ...(descripcion !== undefined ? { descripcion } : {}),
+        color: texto(fila.color, `${ruta}.color`),
+        frecuencia: fila.frecuencia,
+        ...(diasSemana !== undefined ? { diasSemana } : {}),
+        ...(diaMes !== undefined ? { diaMes } : {}),
+        ...(objetivo !== undefined ? { objetivo } : {}),
+        ...(unidad !== undefined ? { unidad } : {}),
+        archivado: booleano(fila.archivado, `${ruta}.archivado`),
+        creadoEn: texto(fila.creadoEn, `${ruta}.creadoEn`),
+        orden: numero(fila.orden, `${ruta}.orden`),
       }
     },
   )
 
-  const idsErrores = new Set<string>()
-  const errores: ErrorTema[] = lista(datosBrutos, 'errores').map(
-    (item, indice) => {
-      const ruta = `errores[${indice}]`
-      const fila = registro(item, ruta)
-      const temaId = texto(fila.temaId, `${ruta}.temaId`)
-      if (!idsTemas.has(temaId)) {
-        throw new ErrorImportacion(
-          `El error ${indice + 1} apunta a un tema que no existe.`,
-        )
-      }
-      if (typeof fila.porQue !== 'string') {
-        throw new ErrorImportacion(`${ruta}.porQue debe ser un texto.`)
-      }
-      return {
-        id: idUnico(fila.id, `${ruta}.id`, idsErrores),
-        temaId,
-        queFallo: texto(fila.queFallo, `${ruta}.queFallo`),
-        porQue: fila.porQue,
-        fecha: fecha(fila.fecha, `${ruta}.fecha`),
-        resuelto: booleano(fila.resuelto, `${ruta}.resuelto`),
-      }
-    },
-  )
+  const idsRegistros = new Set<string>()
+  const registrosHabitos: RegistroHabito[] = listaOpcional(
+    datosBrutos,
+    'registrosHabitos',
+  ).map((item, indice) => {
+    const ruta = `registrosHabitos[${indice}]`
+    const fila = registro(item, ruta)
+    const habitoId = texto(fila.habitoId, `${ruta}.habitoId`)
+    if (!idsHabitos.has(habitoId)) {
+      throw new ErrorImportacion(
+        `El registro ${indice + 1} apunta a un hábito que no existe.`,
+      )
+    }
+    const valor = numeroOpcional(fila.valor, `${ruta}.valor`)
+    const nota = textoOpcional(fila.nota, `${ruta}.nota`)
+    return {
+      id: idUnico(fila.id, `${ruta}.id`, idsRegistros),
+      habitoId,
+      fecha: fecha(fila.fecha, `${ruta}.fecha`),
+      completado: booleano(fila.completado, `${ruta}.completado`),
+      ...(valor !== undefined ? { valor } : {}),
+      ...(nota !== undefined ? { nota } : {}),
+      creadoEn: texto(fila.creadoEn, `${ruta}.creadoEn`),
+    }
+  })
+
+  const idsSesiones = new Set<string>()
+  const sesionesEstudio: SesionEstudio[] = listaOpcional(
+    datosBrutos,
+    'sesionesEstudio',
+  ).map((item, indice) => {
+    const ruta = `sesionesEstudio[${indice}]`
+    const fila = registro(item, ruta)
+    const asignaturaId = texto(fila.asignaturaId, `${ruta}.asignaturaId`)
+    if (!idsAsignaturas.has(asignaturaId)) {
+      throw new ErrorImportacion(
+        `La sesión ${indice + 1} apunta a una asignatura que no existe.`,
+      )
+    }
+    const notas = textoOpcional(fila.notas, `${ruta}.notas`)
+    return {
+      id: idUnico(fila.id, `${ruta}.id`, idsSesiones),
+      asignaturaId,
+      fecha: fecha(fila.fecha, `${ruta}.fecha`),
+      inicio: hora(fila.inicio, `${ruta}.inicio`),
+      fin: hora(fila.fin, `${ruta}.fin`),
+      duracionMinutos: numero(
+        fila.duracionMinutos,
+        `${ruta}.duracionMinutos`,
+      ),
+      ...(notas !== undefined ? { notas } : {}),
+      creadoEn: texto(fila.creadoEn, `${ruta}.creadoEn`),
+    }
+  })
 
   const ajustesBrutos = esRegistro(datosBrutos.ajustes)
     ? datosBrutos.ajustes
@@ -396,6 +455,18 @@ export function importarDatos(contenido: string): Datos {
       typeof ajustesBrutos.sincronizacionAutomatica === 'boolean'
         ? ajustesBrutos.sincronizacionAutomatica
         : true,
+    notificacionesResumenDiario:
+      ajustesBrutos.notificacionesResumenDiario === true,
+    horaResumenDiario:
+      typeof ajustesBrutos.horaResumenDiario === 'string'
+        ? ajustesBrutos.horaResumenDiario
+        : '08:00',
+    notificacionesProximosEventos:
+      ajustesBrutos.notificacionesProximosEventos === true,
+    horaAvisosProximosEventos:
+      typeof ajustesBrutos.horaAvisosProximosEventos === 'string'
+        ? ajustesBrutos.horaAvisosProximosEventos
+        : '09:00',
   }
 
   return normalizarDatos({
@@ -406,8 +477,9 @@ export function importarDatos(contenido: string): Datos {
     tareas,
     proyectos,
     checklist,
-    repasos,
-    errores,
+    habitos,
+    registrosHabitos,
+    sesionesEstudio,
     ajustes,
   })
 }
