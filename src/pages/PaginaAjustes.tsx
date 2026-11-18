@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -13,6 +13,8 @@ import {
   RefreshCw,
   Sun,
   Upload,
+  Bell,
+  BellOff,
 } from 'lucide-react'
 import type { Datos, TemaOscuro } from '../domain/types'
 import { useAppStore } from '../store/useAppStore'
@@ -33,6 +35,16 @@ import { Tarjeta } from '../components/ui/Tarjeta'
 import { Boton } from '../components/ui/Boton'
 import { ControlSegmentado } from '../components/ui/ControlSegmentado'
 import { DialogoConfirmacion } from '../components/ui/DialogoConfirmacion'
+import { Interruptor } from '../components/ui/Interruptor'
+import {
+  activarNotificaciones,
+  actualizarZona,
+  claveConfigurada,
+  desactivarNotificaciones,
+  enviarPrueba,
+  estadoNotificaciones,
+  type EstadoNotificaciones,
+} from '../lib/notificaciones'
 
 const OPCIONES_TEMA = [
   { valor: 'claro' as const, etiqueta: 'Claro' },
@@ -66,12 +78,72 @@ export function PaginaAjustes({ correo }: { correo: string | null }) {
   const ultimaSync = useSyncStore((estado) => estado.ultimaSincronizacion)
   const sincronizarAhora = useSyncStore((estado) => estado.sincronizarAhora)
   const salir = useAuthStore((estado) => estado.salir)
+  const [estadoPush, setEstadoPush] = useState<EstadoNotificaciones | null>(null)
+  const [ocupadoPush, setOcupadoPush] = useState(false)
+  const [errorPush, setErrorPush] = useState<string | null>(null)
+  const [avisoPush, setAvisoPush] = useState<string | null>(null)
   const [importacion, setImportacion] = useState<Datos | null>(null)
   const [mensaje, setMensaje] = useState<{
     tipo: 'ok' | 'error'
     texto: string
   } | null>(null)
   const archivoRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    let vigente = true
+    void estadoNotificaciones()
+      .then((estado) => {
+        if (!vigente) return
+        setEstadoPush(estado)
+        if (estado === 'activas') void actualizarZona()
+      })
+      .catch(() => {
+        if (vigente) setEstadoPush('no-soportado')
+      })
+    return () => {
+      vigente = false
+    }
+  }, [])
+
+  const cambiarPush = async () => {
+    setOcupadoPush(true)
+    setErrorPush(null)
+    setAvisoPush(null)
+    try {
+      if (estadoPush === 'activas') {
+        await desactivarNotificaciones()
+        setEstadoPush('inactivas')
+        setAvisoPush('Notificaciones desactivadas en este dispositivo.')
+      } else {
+        await activarNotificaciones()
+        setEstadoPush('activas')
+        setAvisoPush('Notificaciones activadas. Envía una prueba para comprobarlo.')
+      }
+    } catch (error) {
+      setErrorPush(
+        error instanceof Error ? error.message : 'No se pudieron cambiar las notificaciones.',
+      )
+      setEstadoPush(await estadoNotificaciones().catch(() => null))
+    } finally {
+      setOcupadoPush(false)
+    }
+  }
+
+  const probarPush = async () => {
+    setOcupadoPush(true)
+    setErrorPush(null)
+    setAvisoPush(null)
+    try {
+      await enviarPrueba()
+      setAvisoPush('Aviso de prueba enviado. Debería llegarte en unos segundos.')
+    } catch (error) {
+      setErrorPush(
+        error instanceof Error ? error.message : 'No se pudo enviar el aviso de prueba.',
+      )
+    } finally {
+      setOcupadoPush(false)
+    }
+  }
 
   const sincronizacionActiva = datos.ajustes.sincronizacionAutomatica
   const ocupado = estadoSync === 'conectando' || estadoSync === 'guardando'
@@ -86,6 +158,15 @@ export function PaginaAjustes({ correo }: { correo: string | null }) {
       : estadoSync === 'sincronizado'
         ? 'text-[var(--exito)]'
         : 'text-[var(--texto-suave)]'
+
+  const detallePush =
+    estadoPush === 'activas'
+      ? 'Este dispositivo está suscrito.'
+      : estadoPush === 'bloqueadas'
+        ? 'Notificaciones bloqueadas en este navegador.'
+        : estadoPush === 'no-soportado'
+          ? 'No disponible en este navegador.'
+          : 'El navegador pedirá permiso al activarlas.'
 
   const exportar = () => {
     try {
@@ -158,6 +239,142 @@ export function PaginaAjustes({ correo }: { correo: string | null }) {
 
       <Tarjeta className="mb-4 p-4 sm:p-5">
         <h2 className="flex items-center gap-2 text-sm font-semibold">
+          {estadoPush === 'activas' ? <Bell size={16} /> : <BellOff size={16} />}
+          Notificaciones en el móvil
+        </h2>
+        <p className="mt-1 text-sm text-[var(--texto-suave)]">
+          Recibe avisos aunque la aplicación esté cerrada. Puedes elegir un resumen diario y
+          recordatorios para las tareas y exámenes del día siguiente.
+        </p>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Boton
+            variante={estadoPush === 'activas' ? 'secundario' : 'primario'}
+            onClick={() => void cambiarPush()}
+            disabled={
+              ocupadoPush ||
+              estadoPush === null ||
+              estadoPush === 'no-soportado' ||
+              estadoPush === 'bloqueadas' ||
+              (!claveConfigurada() && estadoPush !== 'activas')
+            }
+          >
+            {estadoPush === 'activas' ? <BellOff size={16} /> : <Bell size={16} />}
+            {ocupadoPush
+              ? 'Un momento…'
+              : estadoPush === 'activas'
+                ? 'Desactivar en este dispositivo'
+                : 'Activar en este dispositivo'}
+          </Boton>
+
+          {estadoPush === 'activas' && (
+            <Boton variante="fantasma" onClick={() => void probarPush()} disabled={ocupadoPush}>
+              Enviar prueba
+            </Boton>
+          )}
+
+          <span className="text-xs text-[var(--texto-suave)]">{detallePush}</span>
+        </div>
+
+        {estadoPush === 'bloqueadas' && (
+          <p className="mt-3 rounded-xl bg-[var(--aviso-suave)] px-3 py-2 text-sm text-[var(--aviso)]">
+            Has bloqueado las notificaciones para esta web. Ábrelas desde el candado de la barra
+            de direcciones de Chrome y vuelve a intentarlo.
+          </p>
+        )}
+
+        {estadoPush === 'no-soportado' && (
+          <p className="mt-3 rounded-xl bg-[var(--aviso-suave)] px-3 py-2 text-sm text-[var(--aviso)]">
+            Este navegador no admite notificaciones push. En Android, usa Chrome actualizado.
+          </p>
+        )}
+
+        {!claveConfigurada() && (
+          <p className="mt-3 rounded-xl bg-[var(--aviso-suave)] px-3 py-2 text-sm text-[var(--aviso)]">
+            Falta la clave pública VAPID en la compilación (variable
+            <code className="mx-1">VITE_VAPID_PUBLIC_KEY</code>), así que no se puede suscribir
+            ningún dispositivo.
+          </p>
+        )}
+
+        {!sincronizacionActiva && (
+          <p className="mt-3 rounded-xl bg-[var(--aviso-suave)] px-3 py-2 text-sm text-[var(--aviso)]">
+            Activa la sincronización automática: el servidor necesita tus tareas y hábitos para
+            enviarte los avisos programados.
+          </p>
+        )}
+
+        {avisoPush && (
+          <p className="mt-3 rounded-xl bg-[var(--exito-suave)] px-3 py-2 text-sm text-[var(--exito)]">
+            {avisoPush}
+          </p>
+        )}
+
+        {errorPush && (
+          <p role="alert" className="mt-3 rounded-xl bg-[var(--peligro-suave)] px-3 py-2 text-sm text-[var(--peligro)]">
+            {errorPush}
+          </p>
+        )}
+
+        <div className="mt-5 grid gap-4 border-t border-[var(--borde)] pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">Resumen diario</p>
+              <p className="mt-0.5 text-xs text-[var(--texto-suave)]">
+                Tareas pendientes, atrasadas y hábitos por marcar.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="time"
+                step={300}
+                value={datos.ajustes.horaResumenDiario}
+                onChange={(evento) => cambiarAjustes({ horaResumenDiario: evento.target.value })}
+                disabled={!datos.ajustes.notificacionesResumenDiario}
+                className="rounded-lg border border-[var(--borde)] bg-[var(--fondo)] px-2 py-1.5 text-sm disabled:opacity-50"
+                aria-label="Hora del resumen diario"
+              />
+              <Interruptor
+                etiqueta="Resumen diario"
+                activo={datos.ajustes.notificacionesResumenDiario}
+                onChange={(valor) => cambiarAjustes({ notificacionesResumenDiario: valor })}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">Aviso para mañana</p>
+              <p className="mt-0.5 text-xs text-[var(--texto-suave)]">
+                Tareas y exámenes del día siguiente.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="time"
+                step={300}
+                value={datos.ajustes.horaAvisosProximosEventos}
+                onChange={(evento) => cambiarAjustes({ horaAvisosProximosEventos: evento.target.value })}
+                disabled={!datos.ajustes.notificacionesProximosEventos}
+                className="rounded-lg border border-[var(--borde)] bg-[var(--fondo)] px-2 py-1.5 text-sm disabled:opacity-50"
+                aria-label="Hora del aviso de tareas y exámenes"
+              />
+              <Interruptor
+                etiqueta="Aviso de tareas y exámenes para mañana"
+                activo={datos.ajustes.notificacionesProximosEventos}
+                onChange={(valor) => cambiarAjustes({ notificacionesProximosEventos: valor })}
+              />
+            </div>
+          </div>
+          <p className="text-xs text-[var(--texto-suave)]">
+            Las horas siguen la zona horaria de este dispositivo. Los ajustes viajan con tus datos
+            sincronizados.
+          </p>
+        </div>
+      </Tarjeta>
+
+      <Tarjeta className="mb-4 p-4 sm:p-5">
+        <h2 className="flex items-center gap-2 text-sm font-semibold">
           <Database size={16} />
           Datos
         </h2>
@@ -185,30 +402,11 @@ export function PaginaAjustes({ correo }: { correo: string | null }) {
               en unos segundos. Solo tu cuenta puede acceder a ellos.
             </p>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={sincronizacionActiva}
-            aria-label="Sincronización automática"
-            onClick={() =>
-              cambiarAjustes({
-                sincronizacionAutomatica: !sincronizacionActiva,
-              })
-            }
-            className={[
-              'relative mt-1 inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors',
-              sincronizacionActiva
-                ? 'bg-[var(--primario)]'
-                : 'bg-[var(--borde)]',
-            ].join(' ')}
-          >
-            <span
-              className={[
-                'inline-block h-4 w-4 rounded-full bg-white shadow transition-transform',
-                sincronizacionActiva ? 'translate-x-6' : 'translate-x-1',
-              ].join(' ')}
-            />
-          </button>
+          <Interruptor
+            etiqueta="Sincronización automática"
+            activo={sincronizacionActiva}
+            onChange={(valor) => cambiarAjustes({ sincronizacionAutomatica: valor })}
+          />
         </div>
 
         <div className="mt-4 rounded-xl bg-[var(--superficie-2)] px-3 py-2.5 text-sm">

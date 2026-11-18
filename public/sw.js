@@ -4,7 +4,7 @@
  *  - Recursos estáticos: caché primero y se guardan al usarlos por primera vez.
  * Sube CACHE_VERSION al publicar cambios importantes de la app.
  */
-const CACHE_VERSION = 'organizador-v6'
+const CACHE_VERSION = 'organizador-v8'
 const CACHE = `${CACHE_VERSION}-estatico`
 const APP_BASE = new URL('./', self.location.href).pathname
 const APP_SHELL = [
@@ -58,18 +58,76 @@ self.addEventListener('activate', (event) => {
   )
 })
 
+self.addEventListener('push', (event) => {
+  event.waitUntil(
+    (async () => {
+      const texto = event.data?.text() ?? ''
+      let datos = {}
+      try {
+        const analizado = texto ? JSON.parse(texto) : null
+        datos = analizado && typeof analizado === 'object' ? analizado : { body: texto }
+      } catch {
+        datos = { body: texto }
+      }
+
+      const titulo =
+        typeof datos.title === 'string' && datos.title ? datos.title : 'Organizador'
+      const opciones = {
+        body:
+          typeof datos.body === 'string' && datos.body
+            ? datos.body
+            : 'Tienes novedades en tu agenda.',
+        icon: `${APP_BASE}icon-192.png`,
+        badge: `${APP_BASE}icon-192.png`,
+        tag: typeof datos.tag === 'string' ? datos.tag : 'organizador',
+        data: { url: typeof datos.url === 'string' ? datos.url : '#/hoy' },
+      }
+
+      await self.registration.showNotification(titulo, opciones)
+    })(),
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+
+  // Las rutas llegan como "#/hoy": se resuelven contra el ámbito del service
+  // worker para que funcionen tanto en local como en GitHub Pages.
+  let destino = self.registration.scope
+  try {
+    const url = new URL(event.notification.data?.url ?? '#/hoy', self.registration.scope)
+    if (url.origin === self.location.origin) destino = url.href
+  } catch {
+    // Se usa la portada de la app.
+  }
+
+  event.waitUntil(
+    (async () => {
+      const ventanas = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true,
+      })
+      const existente = ventanas.find((ventana) =>
+        ventana.url.startsWith(self.registration.scope),
+      )
+
+      if (existente) {
+        await existente.navigate(destino)
+        return existente.focus()
+      }
+
+      return self.clients.openWindow(destino)
+    })(),
+  )
+})
+
 self.addEventListener('fetch', (event) => {
   const { request } = event
   if (request.method !== 'GET') return
 
   const url = new URL(request.url)
+  // La sincronización con Supabase va siempre a la red, nunca a la caché.
   if (url.origin !== self.location.origin) return
-  if (url.origin !== self.location.origin) return
-
-  // La sincronización siempre debe ir a la red, nunca a la caché.
-  if (url.origin !== self.location.origin) {
-    return
-  }
 
   const esNavegacion =
     request.mode === 'navigate' ||
