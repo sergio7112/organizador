@@ -1,0 +1,39 @@
+name: Compilar app de Windows
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Compilar la web para la app
+        run: npm run build:app
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_VAPID_PUBLIC_KEY: ${{ vars.VITE_VAPID_PUBLIC_KEY }}
+
+      - name: Empaquetar Electron
+        run: npx electron-builder --win --config electron-builder.yml
+
+      - name: Subir los instaladores
+        uses: actions/upload-artifact@v4
+        with:
+          name: organizador-windows
+          path: release/*.exe
+          if-no-files-found: error

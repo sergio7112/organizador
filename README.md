@@ -16,6 +16,10 @@ Aplicación personal en español para organizar asignaturas, temario, exámenes,
 
 La clave pública de Supabase queda incluida en la web publicada. Es normal: las políticas RLS de la migración limitan las lecturas y escrituras al usuario autenticado. No añadas nunca una clave `service_role` a GitHub ni a la app.
 
+## Aplicaciones de Windows y Android
+
+Además de la web, el proyecto genera una app de escritorio (Electron) y un APK de Android (Capacitor) con el mismo código y la misma cuenta de Supabase. Instrucciones: [`GUIA_APLICACIONES.md`](GUIA_APLICACIONES.md).
+
 ## Notificaciones push en el móvil
 
 Guía paso a paso: [`GUIA_NOTIFICACIONES.md`](GUIA_NOTIFICACIONES.md).

@@ -11,6 +11,7 @@ import {
   Monitor,
   Moon,
   RefreshCw,
+  Smartphone,
   Sun,
   Upload,
   Bell,
@@ -36,6 +37,7 @@ import { Boton } from '../components/ui/Boton'
 import { ControlSegmentado } from '../components/ui/ControlSegmentado'
 import { DialogoConfirmacion } from '../components/ui/DialogoConfirmacion'
 import { Interruptor } from '../components/ui/Interruptor'
+import { useInstalacionApp } from '../hooks/useInstalacionApp'
 import {
   activarNotificaciones,
   actualizarZona,
@@ -82,6 +84,7 @@ export function PaginaAjustes({ correo }: { correo: string | null }) {
   const [ocupadoPush, setOcupadoPush] = useState(false)
   const [errorPush, setErrorPush] = useState<string | null>(null)
   const [avisoPush, setAvisoPush] = useState<string | null>(null)
+  const { puedeInstalar, instalada, resultado, instalar } = useInstalacionApp()
   const [importacion, setImportacion] = useState<Datos | null>(null)
   const [mensaje, setMensaje] = useState<{
     tipo: 'ok' | 'error'
@@ -235,6 +238,45 @@ export function PaginaAjustes({ correo }: { correo: string | null }) {
             <Monitor size={14} /> Sistema
           </span>
         </div>
+      </Tarjeta>
+
+      <Tarjeta className="mb-4 p-4 sm:p-5">
+        <h2 className="flex items-center gap-2 text-sm font-semibold">
+          <Smartphone size={16} />
+          Instalar la app
+        </h2>
+        <p className="mt-1 text-sm text-[var(--texto-suave)]">
+          Ábrela desde su propio icono, a pantalla completa y sin barra del navegador. También es
+          lo que permite recibir avisos con la app cerrada.
+        </p>
+
+        {instalada ? (
+          <p className="mt-3 rounded-xl bg-[var(--exito-suave)] px-3 py-2 text-sm text-[var(--exito)]">
+            Ya está instalada en este dispositivo. Ábrela desde su icono como cualquier otra app.
+          </p>
+        ) : (
+          <>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              {puedeInstalar && (
+                <Boton onClick={() => void instalar()}>
+                  <Download size={16} />
+                  Instalar en este dispositivo
+                </Boton>
+              )}
+              <span className="text-xs text-[var(--texto-suave)]">
+                {puedeInstalar
+                  ? 'El navegador pedirá confirmación.'
+                  : 'Si no ves el botón, abre el menú de Chrome (⋮) y elige «Instalar aplicación» o «Añadir a pantalla de inicio».'}
+              </span>
+            </div>
+
+            {resultado === 'cancelada' && (
+              <p className="mt-3 rounded-xl bg-[var(--aviso-suave)] px-3 py-2 text-sm text-[var(--aviso)]">
+                Has cancelado la instalación. Puedes volver a intentarlo cuando quieras.
+              </p>
+            )}
+          </>
+        )}
       </Tarjeta>
 
       <Tarjeta className="mb-4 p-4 sm:p-5">

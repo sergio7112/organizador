@@ -1,0 +1,33 @@
+appId: com.sergio7112.organizador
+productName: Organizador
+copyright: Copyright © 2026 Sergio
+
+directories:
+  output: release
+  buildResources: .
+
+files:
+  - dist/**/*
+  - electron/**/*
+  - package.json
+
+artifactName: Organizador-${version}-${arch}.${ext}
+
+win:
+  icon: icono.ico
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: Organizador
+
+portable:
+  artifactName: Organizador-Portable.exe

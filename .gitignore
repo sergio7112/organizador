@@ -4,9 +4,15 @@ node_modules/
 # Build
 dist/
 dist-ssr/
+release/
 *.local
 .env*
 !.env.example
+
+# Firma de Android
+*.jks
+*.keystore
+android/local.properties
 
 # Registros y temporales
 *.log

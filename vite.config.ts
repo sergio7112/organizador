@@ -28,7 +28,10 @@ function precacheManifest(base: string): Plugin {
 }
 
 export default defineConfig(({ mode }) => {
-  const base = mode === 'production' ? '/organizador/' : '/'
+  // La web se publica bajo /organizador/ en GitHub Pages. Las apps empaquetadas
+  // (Electron y Capacitor) cargan los archivos desde el propio paquete, así que
+  // necesitan rutas relativas para poder abrir index.html sin un servidor web.
+  const base = mode === 'production' ? '/organizador/' : './'
   return {
     base,
     plugins: [react(), tailwindcss(), precacheManifest(base)],

@@ -1,4 +1,5 @@
 {
+  "id": "./",
   "name": "Organizador · Estudios",
   "short_name": "Organizador",
   "description": "Organizador personal de asignaturas, temario, exámenes, tareas, proyectos, hábitos y tiempo de estudio.",
@@ -7,6 +8,7 @@
   "start_url": "./#/hoy",
   "scope": "./",
   "display": "standalone",
+  "prefer_related_applications": false,
   "background_color": "#f5f7f9",
   "theme_color": "#1f4e79",
   "categories": ["education", "productivity"],

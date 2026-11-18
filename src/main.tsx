@@ -12,9 +12,10 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 )
 
-// El service worker solo se registra en producción para no interferir con el
-// desarrollo (recarga en caliente) y para que la app funcione offline.
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+// El service worker solo se registra en la web publicada: en desarrollo
+// interferiría con la recarga en caliente y en las apps empaquetadas (Electron
+// y Capacitor) los recursos ya van dentro del paquete y no necesita caché.
+if ('serviceWorker' in navigator && import.meta.env.PROD && import.meta.env.MODE !== 'app') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch((error: unknown) => {
       console.warn('No se pudo registrar el service worker.', error)

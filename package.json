@@ -4,13 +4,20 @@
   "version": "0.3.0",
   "type": "module",
   "description": "Organizador personal de estudios, tareas y proyectos",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:app": "tsc --noEmit && vite build --mode app",
+    "app:start": "npm run build:app && electron .",
+    "app:build:win": "npm run build:app && electron-builder --win --config electron-builder.yml",
+    "app:build:dir": "npm run build:app && electron-builder --win --dir --config electron-builder.yml",
+    "app:sync:android": "npm run build:app && npx cap sync android",
+    "app:open:android": "npm run app:sync:android && npx cap open android"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",
@@ -25,10 +32,15 @@
     "zustand": "^5.1.0"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/cli": "^8.6.2",
+    "@capacitor/core": "^8.6.2",
     "@tailwindcss/vite": "^4.3.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
+    "electron": "^45.3.4",
+    "electron-builder": "^26.18.0",
     "tailwindcss": "^4.3.5",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",
