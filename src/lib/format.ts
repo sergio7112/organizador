@@ -1,7 +1,14 @@
+import { twMerge } from 'tailwind-merge'
+
+/**
+ * Une clases y resuelve conflictos de Tailwind (por ejemplo, `size-9` debe
+ * ganar a `size-10`). Sin esto, los tamaños base de los componentes se
+ * imponían según el orden generado del CSS y desbordaban en móvil.
+ */
 export function cn(
   ...partes: Array<string | false | null | undefined>
 ): string {
-  return partes.filter(Boolean).join(' ')
+  return twMerge(partes.filter(Boolean).join(' '))
 }
 
 export function formatearNota(nota?: number): string {

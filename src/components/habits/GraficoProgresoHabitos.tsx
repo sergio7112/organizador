@@ -247,7 +247,7 @@ export function GraficoProgresoHabitos({
 
   return (
     <Tarjeta>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h3 className="font-semibold">Progreso de hábitos</h3>
         <ControlSegmentado
           valor={vista}
@@ -291,7 +291,7 @@ export function GraficoProgresoHabitos({
         ))}
       </div>
 
-      <div className="h-64" role="img" aria-label={`Gráfico de progreso de hábitos - vista ${vista}`}>
+      <div className="h-72 sm:h-80" role="img" aria-label={`Gráfico de progreso de hábitos - vista ${vista}`}>
         <ResponsiveContainer width="100%" height="100%">
           {vista === 'semana' ? (
             <AreaChart data={datos} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>

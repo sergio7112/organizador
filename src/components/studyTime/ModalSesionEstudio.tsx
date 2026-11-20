@@ -168,7 +168,7 @@ export function ModalSesionEstudio({
 
         {error && <p role="alert" className="text-sm text-[var(--peligro)]">{error}</p>}
 
-        <div className="flex gap-3 justify-end pt-2">
+        <div className="sticky bottom-0 -mx-5 -mb-4 mt-2 flex justify-end gap-2 border-t border-[var(--borde)] bg-[var(--superficie)] px-5 pt-3 pb-modal">
           <Boton variante="secundario" type="button" onClick={onCerrar}>
             Cancelar
           </Boton>

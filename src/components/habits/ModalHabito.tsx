@@ -126,7 +126,6 @@ export function ModalHabito({
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
             className="rounded-xl border border-[var(--borde)] bg-[var(--fondo)] px-3 py-2.5"
-            autoFocus
           />
           {error && <p className="text-sm text-[var(--peligro)]">{error}</p>}
         </Campo>
@@ -263,7 +262,7 @@ export function ModalHabito({
           </Campo>
         </div>
 
-        <div className="flex gap-3 justify-end pt-2">
+        <div className="sticky bottom-0 -mx-5 -mb-4 mt-2 flex justify-end gap-2 border-t border-[var(--borde)] bg-[var(--superficie)] px-5 pt-3 pb-modal">
           <Boton variante="secundario" type="button" onClick={onCerrar}>
             Cancelar
           </Boton>

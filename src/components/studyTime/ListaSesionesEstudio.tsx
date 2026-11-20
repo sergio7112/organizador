@@ -157,11 +157,11 @@ export function ListaSesionesEstudio({
               <div key={fecha} className="grid gap-3">
                 {agrupado && (
                   <div className="flex items-center gap-3 px-1">
-                    <div className="h-0.5 flex-1 bg-[var(--borde)]" />
-                    <span className="text-sm font-medium text-[var(--texto-suave)] whitespace-nowrap">
+                    <div className="h-0.5 min-w-0 flex-1 bg-[var(--borde)]" />
+                    <span className="shrink-0 text-sm font-medium text-[var(--texto-suave)]">
                       {fecha === 'Todas' ? 'Todas las sesiones' : formatearFechaCorta(fecha)}
                     </span>
-                    <div className="h-0.5 flex-1 bg-[var(--borde)]" />
+                    <div className="h-0.5 min-w-0 flex-1 bg-[var(--borde)]" />
                   </div>
                 )}
 

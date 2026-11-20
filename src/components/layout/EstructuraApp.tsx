@@ -21,7 +21,7 @@ export function EstructuraApp() {
       <BarraLateral />
       <div className="flex min-w-0 flex-1 flex-col">
         <CabeceraMovil />
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-10 pt-4 md:px-8 md:pb-12 md:pt-9">
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-4 pb-pagina md:px-8 md:pb-12 md:pt-9">
           <div key={pathname} className="animar-panel">
             <Suspense
               fallback={

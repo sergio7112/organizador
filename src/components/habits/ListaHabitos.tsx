@@ -94,6 +94,23 @@ export function ListaHabitos({
   const [habitoEliminando, setHabitoEliminando] = useState<Habito | null>(null)
   const [menuAbierto, setMenuAbierto] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (!menuAbierto) return
+    const alPulsarFuera = (evento: PointerEvent) => {
+      const objetivo = evento.target as Element | null
+      if (!objetivo?.closest('[data-menu-habito]')) setMenuAbierto(null)
+    }
+    const alPulsarTecla = (evento: KeyboardEvent) => {
+      if (evento.key === 'Escape') setMenuAbierto(null)
+    }
+    document.addEventListener('pointerdown', alPulsarFuera)
+    document.addEventListener('keydown', alPulsarTecla)
+    return () => {
+      document.removeEventListener('pointerdown', alPulsarFuera)
+      document.removeEventListener('keydown', alPulsarTecla)
+    }
+  }, [menuAbierto])
+
   const abrirNuevo = () => {
     setHabitoEditando(null)
     setModalAbierto(true)
@@ -219,6 +236,7 @@ export function ListaHabitos({
                   <Tarjeta className="flex w-full items-start gap-3 p-4">
                     <button
                       type="button"
+                      data-menu-habito
                       className="mt-1 flex h-8 w-8 shrink-0 cursor-grab items-center justify-center rounded-xl bg-[var(--superficie-2)] text-[var(--texto-suave)] transition-colors hover:bg-[var(--borde)] active:cursor-grabbing"
                       onClick={() => setMenuAbierto(menuAbierto === habito.id ? null : habito.id)}
                       aria-label="Más opciones"
@@ -282,7 +300,7 @@ export function ListaHabitos({
 
                     {/* Menú contextual */}
                     {menuAbierto === habito.id && (
-                      <div className="absolute right-4 top-4 z-10">
+                      <div data-menu-habito className="absolute right-4 top-4 z-40">
                         <div className="rounded-xl border border-[var(--borde)] bg-[var(--superficie)] shadow-xl p-1 min-w-[160px]">
                           <button
                             type="button"

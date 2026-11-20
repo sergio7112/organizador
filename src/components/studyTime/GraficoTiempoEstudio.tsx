@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Bar,
   LineChart,
@@ -246,6 +246,24 @@ export function GraficoTiempoEstudio({ sesiones, asignaturas }: GraficoTiempoEst
     [asignaturas, agregados],
   )
 
+  // Al crear asignaturas o sesiones nuevas, la selección inicial debe
+  // actualizarse; si no, el gráfico puede quedar vacío hasta recargar.
+  useEffect(() => {
+    const disponibles = new Set(asignaturasConDatos.map((a) => a.id))
+    setAsignaturasSeleccionadas((actuales) => {
+      const validas = actuales.filter((id) => disponibles.has(id))
+      const nuevas = asignaturasConDatos
+        .filter((a) => !validas.includes(a.id))
+        .slice(0, Math.max(0, 5 - validas.length))
+        .map((a) => a.id)
+      const resultado = [...validas, ...nuevas]
+      return resultado.length === actuales.length &&
+        resultado.every((id, indice) => id === actuales[indice])
+        ? actuales
+        : resultado
+    })
+  }, [asignaturasConDatos])
+
   const datosGrafico = useMemo(() => {
     switch (vista) {
       case 'semana':
@@ -310,7 +328,7 @@ export function GraficoTiempoEstudio({ sesiones, asignaturas }: GraficoTiempoEst
 
       {/* Controles */}
       <Tarjeta className="p-4">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h3 className="font-semibold">Visualización</h3>
           {vista !== 'asignaturas' && (
             <ControlSegmentado
@@ -378,7 +396,7 @@ export function GraficoTiempoEstudio({ sesiones, asignaturas }: GraficoTiempoEst
 
       {/* Gráfico principal */}
       <Tarjeta>
-        <div className="h-80" role="img" aria-label={`Gráfico de tiempo de estudio - ${vista}`}>
+        <div className="h-96" role="img" aria-label={`Gráfico de tiempo de estudio - ${vista}`}>
           <ResponsiveContainer width="100%" height="100%">
             {vista === 'asignaturas' ? (
               <PieChart>
@@ -386,8 +404,8 @@ export function GraficoTiempoEstudio({ sesiones, asignaturas }: GraficoTiempoEst
                   data={datosPorAsignatura}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
+                  innerRadius="40%"
+                  outerRadius="72%"
                   paddingAngle={2}
                   dataKey="valor"
                   nameKey="nombre"
@@ -673,12 +691,14 @@ export function GraficoTiempoEstudio({ sesiones, asignaturas }: GraficoTiempoEst
               <tbody>
                 {datosPorAsignatura.map((item) => (
                   <tr key={item.id} className="border-b border-[var(--borde)]/50">
-                    <td className="py-2 flex items-center gap-2">
-                      <span
-                        className="h-2.5 w-2.5 rounded-full"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      {item.nombre}
+                    <td className="py-2">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <span className="min-w-0">{item.nombre}</span>
+                      </div>
                     </td>
                     <td className="py-2 text-right font-medium">{formatearDuracion(item.valor)}</td>
                     <td className="py-2 text-right text-[var(--texto-suave)]">{item.numSesiones}</td>

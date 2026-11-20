@@ -103,7 +103,6 @@ export function ModalTarea({
             value={titulo}
             onChange={(evento) => setTitulo(evento.target.value)}
             placeholder="Ej. Entregar los ejercicios de física"
-            autoFocus
             required
           />
         </Campo>

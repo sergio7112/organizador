@@ -23,7 +23,7 @@ export function ControlSegmentado<T extends string>({
       role="group"
       aria-label={ariaLabel}
       className={cn(
-        'inline-flex w-fit rounded-xl border border-[var(--borde)] bg-[var(--superficie-2)] p-1',
+        'inline-flex w-fit max-w-full overflow-x-auto rounded-xl border border-[var(--borde)] bg-[var(--superficie-2)] p-1',
         className,
       )}
     >
@@ -36,7 +36,7 @@ export function ControlSegmentado<T extends string>({
             aria-pressed={activa}
             onClick={() => onChange(opcion.valor)}
             className={cn(
-              'h-8 rounded-lg px-3 text-xs font-medium transition-colors',
+              'h-8 shrink-0 whitespace-nowrap rounded-lg px-2 text-xs font-medium transition-colors sm:px-3',
               activa
                 ? 'bg-[var(--superficie)] text-[var(--texto)] shadow-sm'
                 : 'text-[var(--texto-suave)] hover:text-[var(--texto)]',

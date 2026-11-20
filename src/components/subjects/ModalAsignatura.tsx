@@ -68,7 +68,6 @@ export function ModalAsignatura({
             value={nombre}
             onChange={(evento) => setNombre(evento.target.value)}
             placeholder="Ej. Matemáticas II"
-            autoFocus
             required
           />
         </Campo>

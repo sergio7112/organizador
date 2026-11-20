@@ -88,7 +88,7 @@ export function PaginaCalendario() {
 
       <Tarjeta className="mb-4 p-3 sm:p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-1">
+          <div className="flex flex-wrap items-center gap-1">
             <Boton
               variante="fantasma"
               tamano="icono"
@@ -98,7 +98,7 @@ export function PaginaCalendario() {
             >
               <ChevronLeft size={18} />
             </Boton>
-            <p className="min-w-44 text-center text-sm font-semibold">
+            <p className="min-w-0 flex-1 text-center text-sm font-semibold sm:min-w-44 sm:flex-none">
               {capitalizar(etiquetaRango())}
             </p>
             <Boton

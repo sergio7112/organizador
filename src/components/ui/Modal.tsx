@@ -1,8 +1,9 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cn } from '../../lib/format'
+import { bloquearScroll, desbloquearScroll } from '../../lib/scrollLock'
 import { Boton } from './Boton'
 
 const ANCHOS = {
@@ -33,10 +34,30 @@ export function Modal({
   const idTitulo = useId()
   const panel = useRef<HTMLDivElement>(null)
   const cerrarRef = useRef(onCerrar)
+  const [alturaTeclado, setAlturaTeclado] = useState(0)
 
   useEffect(() => {
     cerrarRef.current = onCerrar
   }, [onCerrar])
+
+  // En Android el teclado puede tapar el pie del modal aunque `dvh` cambie:
+  // el viewport visual es el que se reduce. Lo medimos y desplazamos el panel.
+  useEffect(() => {
+    if (!abierto) return
+    const vista = window.visualViewport
+    if (!vista) return
+
+    const medir = () => {
+      setAlturaTeclado(Math.max(0, window.innerHeight - vista.height - vista.offsetTop))
+    }
+    medir()
+    vista.addEventListener('resize', medir)
+    vista.addEventListener('scroll', medir)
+    return () => {
+      vista.removeEventListener('resize', medir)
+      vista.removeEventListener('scroll', medir)
+    }
+  }, [abierto])
 
   useEffect(() => {
     if (!abierto) return
@@ -44,13 +65,15 @@ export function Modal({
       if (evento.key === 'Escape') cerrarRef.current()
     }
     document.addEventListener('keydown', alPulsar)
-    const overflowAnterior = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    bloquearScroll()
+    // Se captura aquí, antes de mover el foco al diálogo. Los campos ya no
+    // usan autoFocus, así que el elemento activo sigue siendo el botón que
+    // abrió el modal y se puede restaurar al cerrar.
     const focoAnterior = document.activeElement as HTMLElement | null
     panel.current?.focus()
     return () => {
       document.removeEventListener('keydown', alPulsar)
-      document.body.style.overflow = overflowAnterior
+      desbloquearScroll()
       focoAnterior?.focus()
     }
   }, [abierto])
@@ -70,8 +93,12 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={idTitulo}
+        style={{
+          marginBottom: alturaTeclado,
+          maxHeight: `calc(100dvh - ${alturaTeclado}px - 1rem)`,
+        }}
         className={cn(
-          'animar-panel relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-[var(--borde)] bg-[var(--superficie)] shadow-2xl outline-none sm:rounded-2xl',
+          'animar-panel relative flex w-full flex-col overflow-hidden rounded-t-2xl border border-[var(--borde)] bg-[var(--superficie)] shadow-2xl outline-none sm:rounded-2xl',
           ANCHOS[ancho],
         )}
       >
@@ -95,10 +122,10 @@ export function Modal({
           </Boton>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">{children}</div>
 
         {pie && (
-          <div className="flex justify-end gap-2 border-t border-[var(--borde)] px-5 py-3 pb-safe sm:pb-3">
+          <div className="flex shrink-0 justify-end gap-2 border-t border-[var(--borde)] px-5 pt-3 pb-modal">
             {pie}
           </div>
         )}

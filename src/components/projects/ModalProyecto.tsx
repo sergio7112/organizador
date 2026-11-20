@@ -79,7 +79,6 @@ export function ModalProyecto({
             value={nombre}
             onChange={(evento) => setNombre(evento.target.value)}
             placeholder="Ej. Preparar la selectividad"
-            autoFocus
             required
           />
         </Campo>

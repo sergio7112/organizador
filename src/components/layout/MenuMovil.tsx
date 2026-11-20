@@ -5,6 +5,7 @@ import { Settings, X } from 'lucide-react'
 import { Logotipo } from '../ui/Logotipo'
 import { SECCIONES, SECCION_AJUSTES } from './navegacion'
 import { cn } from '../../lib/format'
+import { bloquearScroll, desbloquearScroll } from '../../lib/scrollLock'
 
 interface MenuMovilProps {
   abierto: boolean
@@ -23,14 +24,13 @@ export function MenuMovil({ abierto, onCerrar }: MenuMovilProps) {
     }
     document.addEventListener('keydown', alPulsar)
 
-    const overflowAnterior = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    bloquearScroll()
     const focoAnterior = document.activeElement as HTMLElement | null
     panel.current?.querySelector<HTMLElement>('a, button')?.focus()
 
     return () => {
       document.removeEventListener('keydown', alPulsar)
-      document.body.style.overflow = overflowAnterior
+      desbloquearScroll()
       focoAnterior?.focus()
     }
   }, [abierto, onCerrar])

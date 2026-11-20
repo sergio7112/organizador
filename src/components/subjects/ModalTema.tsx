@@ -86,7 +86,6 @@ export function ModalTema({
             value={titulo}
             onChange={(evento) => setTitulo(evento.target.value)}
             placeholder="Ej. Campo gravitatorio"
-            autoFocus
             required
           />
         </Campo>

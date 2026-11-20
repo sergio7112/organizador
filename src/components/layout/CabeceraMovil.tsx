@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Menu, Settings } from 'lucide-react'
 import { Logotipo } from '../ui/Logotipo'
@@ -12,9 +12,11 @@ export function CabeceraMovil() {
     setAbierto(false)
   }, [pathname])
 
+  const cerrar = useCallback(() => setAbierto(false), [])
+
   return (
     <>
-      <header className="sticky top-0 z-30 grid h-14 grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2 border-b border-[var(--borde)] bg-[var(--fondo)] px-3 pt-safe md:hidden">
+      <header className="sticky top-0 z-30 grid min-h-14 grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2 border-b border-[var(--borde)] bg-[var(--fondo)] px-3 pt-safe md:hidden">
         <button
           type="button"
           onClick={() => setAbierto(true)}
@@ -42,7 +44,7 @@ export function CabeceraMovil() {
         </Link>
       </header>
 
-      <MenuMovil abierto={abierto} onCerrar={() => setAbierto(false)} />
+      <MenuMovil abierto={abierto} onCerrar={cerrar} />
     </>
   )
 }

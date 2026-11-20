@@ -104,6 +104,15 @@
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 }
 
+/* Espaciado inferior que respeta la barra de gestos sin perder el margen. */
+@utility pb-pagina {
+  padding-bottom: max(2.5rem, env(safe-area-inset-bottom));
+}
+
+@utility pb-modal {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
 @utility pt-safe {
   padding-top: env(safe-area-inset-top);
 }
@@ -145,6 +154,11 @@
   animation: subir 0.2s ease-out;
 }
 
+/* Alias usado por las páginas de hábitos y tiempo de estudio. */
+@utility animar-entrada {
+  animation: subir 0.2s ease-out;
+}
+
 @utility animar-menu {
   animation: entrar-izquierda 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -152,6 +166,7 @@
 @media (prefers-reduced-motion: reduce) {
   .animar-fondo,
   .animar-panel,
+  .animar-entrada,
   .animar-menu {
     animation: none;
   }

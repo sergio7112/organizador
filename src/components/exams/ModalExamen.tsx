@@ -106,7 +106,6 @@ export function ModalExamen({
             value={titulo}
             onChange={(evento) => setTitulo(evento.target.value)}
             placeholder="Ej. Campos gravitatorio y eléctrico"
-            autoFocus
             required
           />
         </Campo>
@@ -170,7 +169,7 @@ export function ModalExamen({
                 </button>
               </div>
             </div>
-            <div className="max-h-56 overflow-y-auto p-1.5">
+            <div className="max-h-56 overflow-y-auto overscroll-contain p-1.5">
               {temasDisponibles.length === 0 ? (
                 <p className="px-2 py-3 text-sm text-[var(--texto-suave)]">
                   Esta asignatura todavía no tiene temas.
